@@ -2,7 +2,7 @@
 #include "bitboard.hpp"
 
 
-const Square Position::rook_ini[PlayerDim][CastlingFlagDim] = {{0, 7}, {56, 63}};
+const Square Position::rook_ini[PlayerDim][CastlingFlagDim] = {{7, 0}, {63, 56}};
 Array<Array<Array<uint64_t, NSquare>, PieceDim>, PlayerDim> Position::hash_seed;
 const FEN startpos({"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR","w","KQkq","-","0","1"});
 void Position::xor_piece(Player us, Piece piece, Square sq){

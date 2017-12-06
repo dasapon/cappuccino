@@ -14,3 +14,4 @@ uint64_t performance_test(Position& pos, int depth){
 	}
 	return ret;
 }
+

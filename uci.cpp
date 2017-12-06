@@ -37,7 +37,7 @@ void uci_loop(){
 				assert(cmds[1] == "fen");
 				FEN fen;
 				assert(cmds.size() >= 2 + FEN::size());
-				for(int j=0;i<FEN::size();j++){
+				for(int j=0;j<FEN::size();j++){
 					fen[j] = cmds[i++];
 				}
 				pos.load_fen(fen);
@@ -60,15 +60,15 @@ void uci_loop(){
 			pos.to_fen();
 			Array<Move, MaxLegalMove> moves;
 			int n = pos.generate_important_moves(moves, 0);
-			std::cout << n <<"!!!"<< std::endl;
 			n = pos.generate_unimportant_moves(moves, n);
+			std::cout << n << " ";
 			for(int i=0;i<n;i++){
 				std::cout << moves[i].to_fen() << " ";
 			}
 			std::cout << std::endl;
 		}
 		else if(cmds[0] == "perft"){
-			for(int i=1;i<6;i++){
+			for(int i=1;i<7;i++){
 				std::cout << performance_test(pos, i) <<std::endl;
 			}
 		}
