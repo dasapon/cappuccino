@@ -16,14 +16,14 @@ void Position::xor_piece(Player us, Piece piece, Square sq){
 }
 
 bool Position::is_attacked(Player p, Square sq)const{
-	return is_attacked(p, sq, all_bb);
+	return is_attacked(p, sq, all_bb, 0);
 }
-bool Position::is_attacked(Player p, Square sq, BitBoard customized_all)const{
-	if(piece_attack<Knight>(sq, customized_all) & occupied[p] & pieces[Knight])return true;
-	if(piece_attack<King>(sq, customized_all) & occupied[p] & pieces[King])return true;
-	if(piece_attack<Rook>(sq, customized_all) & occupied[p] & (pieces[Rook] | pieces[Queen]))return true;
-	if(piece_attack<Bishop>(sq, customized_all) & occupied[p] & (pieces[Bishop] | pieces[Queen]))return true;
-	return (pawn_attack_table[opponent(p)][sq] & occupied[p] & pieces[Pawn]) != 0;
+bool Position::is_attacked(Player p, Square sq, BitBoard customized_all, BitBoard ignored)const{
+	if(piece_attack<Knight>(sq, customized_all) & occupied[p] & pieces[Knight] & ~ignored)return true;
+	if(piece_attack<King>(sq, customized_all) & occupied[p] & pieces[King]& ~ignored)return true;
+	if(piece_attack<Rook>(sq, customized_all) & occupied[p] & (pieces[Rook] | pieces[Queen]) & ~ignored)return true;
+	if(piece_attack<Bishop>(sq, customized_all) & occupied[p] & (pieces[Bishop] | pieces[Queen]) & ~ignored)return true;
+	return (pawn_attack_table[opponent(p)][sq] & occupied[p] & pieces[Pawn] & ~ignored) != 0;
 }
 BitBoard Position::attackers(Player us, Square sq)const{
 	BitBoard ret = piece_attack<Knight>(sq, all_bb) & occupied[us] & pieces[Knight];
@@ -33,7 +33,7 @@ BitBoard Position::attackers(Player us, Square sq)const{
 	ret |= pawn_attack_table[opponent(us)][sq] & occupied[us] & pieces[Pawn];
 	return ret;
 }
-
+int enpassant_count = 0;
 void Position::make_move(Move move){
 	Square from = move.from(), to = move.to();
 	Piece captured = move.capture();
@@ -41,6 +41,7 @@ void Position::make_move(Move move){
 	if(captured != Empty){
 		if(bb_sq(to) == enpassant_bb){//enpassant
 			assert(captured == Pawn);
+			enpassant_count++;
 			if(turn == White){
 				xor_piece(Black, captured, to - 8);
 			}
@@ -91,21 +92,25 @@ void Position::make_move(Move move){
 
 bool Position::is_suicide_move(Move move)const{
 	Square to = move.to();
+	BitBoard to_bb = bb_sq(to);
+	BitBoard ignored = to_bb;
 	BitBoard next_all = all_bb ^ bb_sq(move.from());
 	if(move.capture()!=Empty){
-		if(bb_sq(to) == enpassant_bb){
-			next_all ^= bb_sq(to);
-			next_all ^= bb_sq(turn == White? to - 8 : to + 8);
+		if(to_bb == enpassant_bb){
+			ignored ^= bb_sq(turn == White? to - 8 : to + 8);
+			//next_all ^= to_bb;
+			//next_all ^= bb_sq(turn == White? to - 8 : to + 8);
+			next_all ^= ignored;
 		}
 	}
 	else{
-		next_all ^= bb_sq(to);
+		next_all ^= to_bb;
 	}
 	Square ksq = king_sq[turn];
 	if(move.piece() == King){
 		ksq = to;
 	}
-	return is_attacked(opponent(turn), ksq, next_all);
+	return is_attacked(opponent(turn), ksq, next_all, ignored);
 }
 
 void Position::load_fen(const FEN& fen){

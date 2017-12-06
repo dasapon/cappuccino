@@ -68,10 +68,9 @@ void uci_loop(){
 			std::cout << std::endl;
 		}
 		else if(cmds[0] == "perft"){
-			std::cout << performance_test(pos, 1) <<",";
-			std::cout << performance_test(pos, 2) <<",";
-			std::cout << performance_test(pos, 3) <<",";
-			std::cout << performance_test(pos, 4) <<std::endl;
+			for(int i=1;i<6;i++){
+				std::cout << performance_test(pos, i) <<std::endl;
+			}
 		}
 	}
 }

@@ -28,7 +28,7 @@ class Position{
 	template<Player turn>
 	int generate_pawn_moves(Array<Move, MaxLegalMove>&, int idx, BitBoard target)const;
 	bool is_attacked(Player p, Square sq)const;
-	bool is_attacked(Player p, Square sq, BitBoard customized_all)const;
+	bool is_attacked(Player p, Square sq, BitBoard customized_all, BitBoard ignored)const;
 	BitBoard attackers(Player turn, Square sq)const;
 public:
 	static void init_hash_seed();
