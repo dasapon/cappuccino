@@ -20,16 +20,16 @@ int Position::generate_pawn_moves(Array<Move, MaxLegalMove>& moves, int idx, Bit
 	const BitBoard enemy_pieces = occupied[opponent(us)];
 	constexpr BitBoard promotion_squares = us ==White? RANK_8 : RANK_1;
 	const BitBoard pawns = occupied[us] & pieces[Pawn];
-	const BitBoard attack_west = pawn_attack_west<us>(pawns) & enemy_pieces & target;
-	const BitBoard attack_east = pawn_attack_east<us>(pawns) & enemy_pieces & target;
+	const BitBoard attack_west = pawn_attack_west<us>(pawns) & target;
+	const BitBoard attack_east = pawn_attack_east<us>(pawns) & target;
 	//Generate captures
-	BitBoard to_bb = attack_west & ~promotion_squares;
+	BitBoard to_bb = attack_west & enemy_pieces & ~promotion_squares;
 	while(to_bb){
 		Square to = pop_one(to_bb);
 		Square from = turn==White? to - 7 : to + 9;
 		moves[idx++] = Move(Pawn, board[to], from, to);
 	}
-	to_bb = attack_west & promotion_squares;
+	to_bb = attack_west & enemy_pieces & promotion_squares;
 	while(to_bb){
 		Square to = pop_one(to_bb);
 		Square from = us==White? to - 7 : to + 9;
@@ -38,13 +38,13 @@ int Position::generate_pawn_moves(Array<Move, MaxLegalMove>& moves, int idx, Bit
 		moves[idx++] = Move(Pawn, Rook, board[to], from, to);
 		moves[idx++] = Move(Pawn, Queen, board[to], from, to);
 	}
-	to_bb = attack_east & ~promotion_squares;
+	to_bb = attack_east & enemy_pieces & ~promotion_squares;
 	while(to_bb){
 		Square to = pop_one(to_bb);
 		Square from = us==White? to - 9 : to + 7;
 		moves[idx++] = Move(Pawn, board[to], from, to);
 	}
-	to_bb = attack_east & promotion_squares;
+	to_bb = attack_east & enemy_pieces & promotion_squares;
 	while(to_bb){
 		Square to = pop_one(to_bb);
 		Square from = us==White? to - 9 : to + 7;
@@ -54,8 +54,17 @@ int Position::generate_pawn_moves(Array<Move, MaxLegalMove>& moves, int idx, Bit
 		moves[idx++] = Move(Pawn, Queen, board[to], from, to);
 	}
 	//Generate enpassant
-	//not implemented
-	
+	if(target & enpassant_bb){
+		Square to = bsf(enpassant_bb);
+		if(attack_west & enpassant_bb){
+			Square from = turn==White? to - 7 : to + 9;
+			moves[idx++] = Move(Pawn, Pawn, from, to);
+		}
+		if(attack_east & enpassant_bb){
+			Square from = us==White? to - 9 : to + 7;
+			moves[idx++] = Move(Pawn, Pawn, from, to);
+		}
+	}
 	//Generate pawn push
 	BitBoard push = pawn_push<us>(pawns, all_bb);
 	to_bb =  push & target & promotion_squares;

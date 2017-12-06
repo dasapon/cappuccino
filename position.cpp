@@ -192,5 +192,14 @@ void Position::init_hash_seed(){
 FEN Position::to_fen()const{
 	FEN fen;
 	std::cout << show_bb(all_bb)<<std::endl;
+	//board
+	//turn
+	//castling
+	//enpassant
+	if(enpassant_bb){
+		fen[3] = square_string(bsf(enpassant_bb));
+	}
+	//halfmove
+	//fullmove
 	return fen;
 }
