@@ -1,31 +1,30 @@
 #include "bitboard.hpp"
 
-BitBoardTable<64> knight_attack_table, king_attack_table;
-BitBoardTable<64> rank_mask_table, file_mask_table, diag_mask_table, diag2_mask_table;
+BitBoardTable knight_attack_table, king_attack_table;
+BitBoardTable rank_mask_table, file_mask_table, diag_mask_table, diag2_mask_table;
+Array<BitBoardTable, PlayerDim> pawn_attack_table;
+Array<BitBoardTable, NSquare> sandwiched_squares;
 
-Array<BitBoardTable<64>, 8> rank_diag_attack_table, file_attack_table;
+static Array<Array<BitBoard, 64>, 8> rank_diag_attack_table, file_attack_table;
 
-void init_tables(){
-	const BitBoard a_file = 0x0101010101010101ULL;
-	const BitBoard h_file = 0x8080808080808080ULL;
-	const BitBoard first_rank = 0xffULL;
+void init_bitboard_tables(){
 	
-	auto left = [=](BitBoard bb){return (bb >> 1) & ~h_file;};
-	auto right = [=](BitBoard bb){return (bb << 1) & ~a_file;};
+	auto left = [=](BitBoard bb){return (bb >> 1) & ~FILE_H;};
+	auto right = [=](BitBoard bb){return (bb << 1) & ~FILE_A;};
 	for(Square sq = 0;sq < NSquare;sq++){
-		rank_mask_table[sq] = first_rank << (sq / 8);
-		file_mask_table[sq] = a_file << (sq % 8);
+		rank_mask_table[sq] = RANK_1 << (sq / 8);
+		file_mask_table[sq] = FILE_A << (sq % 8);
 		//init diag_mask and diag2_mask
 		BitBoard diag1 = bb_sq(sq);
 		while(true){
-			BitBoard bb = ((diag1 << 9) & ~a_file) | ((diag1 >> 9) & ~h_file);
+			BitBoard bb = ((diag1 << 9) & ~FILE_A) | ((diag1 >> 9) & ~FILE_H);
 			if((bb | diag1) == diag1)break;
 			diag1 |= bb;
 		}
 		diag_mask_table[sq] = diag1;
 		BitBoard diag2 = bb_sq(sq);
 		while(true){
-			BitBoard bb = ((diag2 << 7) & ~h_file) | ((diag2 >> 7) & ~a_file);
+			BitBoard bb = ((diag2 << 7) & ~FILE_H) | ((diag2 >> 7) & ~FILE_A);
 			if((bb | diag2) == diag2)break;
 			diag2 |= bb;
 		}
@@ -38,6 +37,10 @@ void init_tables(){
 		
 		//init king_attack
 		king_attack_table[sq] = lr | ((lr | bb_sq(sq)) << 8) | ((lr | bb_sq(sq)) >> 8);
+		
+		//init pawn_attack
+		pawn_attack_table[White][sq] = lr << 8;
+		pawn_attack_table[Black][sq] = lr >> 8;
 	}
 	
 	//init sliding_attack_table
@@ -65,6 +68,14 @@ void init_tables(){
 			file_attack_table[i][occ] = f_attack;
 		}
 	}
+	
+	//init sandwiched squares
+	for(Square sq1 = 0;sq1 < NSquare;sq1++){
+		for(Square sq2 = 0; sq2 < NSquare; sq2++){
+			BitBoard bb = bb_sq(sq1) | bb_sq(sq2);
+			sandwiched_squares[sq1][sq2] = queen_attack(sq1, bb) | queen_attack(sq2, bb);
+		}
+	}
 }
 
 std::string show_bb(const BitBoard bb){
@@ -78,4 +89,37 @@ std::string show_bb(const BitBoard bb){
 		ret += "/";
 	}
 	return ret;
+}
+
+static inline BitBoard rank_diag_attack(Square sq, BitBoard occupied, BitBoard mask){
+	occupied &= mask;
+	return rank_diag_attack_table[file(sq)][(occupied * FILE_B) >> 58] & mask;
+}
+
+BitBoard bishop_attack(Square sq, BitBoard occupied){
+	return rank_diag_attack(sq, occupied, diag_mask_table[sq])
+		| rank_diag_attack(sq, occupied, diag2_mask_table[sq]);
+}
+
+BitBoard rook_attack(Square sq, BitBoard occupied){
+	BitBoard rank_attack = rank_diag_attack(sq, occupied, rank_mask_table[sq]);
+	//calculate file attack
+	constexpr BitBoard magic = 0x0204081020408000ULL;
+	/*
+	 * H0000000		01000000	00BCDEFG
+	 * G0000000		00100000	00000000
+	 * F0000000		00010000	00000000
+	 * E0000000		00001000	00000000
+	 * D0000000		00000100	00000000
+	 * C0000000		00000010	00000000
+	 * B0000000		00000001	00000000
+	 * A0000000		00000000	00000000
+	 * */
+	 BitBoard mask = file_mask_table[sq];
+	 BitBoard file_attack = file_attack_table[rank(sq)][((mask >> file(sq)) * magic) >> 58] & mask;
+	 return file_attack | rank_attack;
+}
+
+BitBoard queen_attack(Square sq, BitBoard occupied){
+	return bishop_attack(sq, occupied) | rook_attack(sq, occupied);
 }
