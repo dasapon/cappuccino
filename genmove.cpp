@@ -54,6 +54,7 @@ int Position::generate_pawn_moves(Array<Move, MaxLegalMove>& moves, int idx, Bit
 		moves[idx++] = Move(Pawn, Queen, board[to], from, to);
 	}
 	//Generate enpassant
+	//not implemented
 	
 	//Generate pawn push
 	BitBoard push = pawn_push<us>(pawns, all_bb);

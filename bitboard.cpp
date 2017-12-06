@@ -118,7 +118,7 @@ BitBoard rook_attack(Square sq, BitBoard occupied){
 	 * A0000000		00000000	00000000
 	 * */
 	 BitBoard mask = file_mask_table[sq];
-	 BitBoard file_attack = file_attack_table[rank(sq)][((mask >> file(sq)) * magic) >> 58] & mask;
+	 BitBoard file_attack = file_attack_table[rank(sq)][(((mask & occupied) >> file(sq)) * magic) >> 58] & mask;
 	 return file_attack | rank_attack;
 }
 
