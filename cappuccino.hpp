@@ -79,4 +79,6 @@ constexpr int MaxLegalMove = 256;
 
 using FEN = Array<std::string, 6>;
 
+class Position;
+extern uint64_t performance_test(Position&, int);
 extern void uci_loop();
