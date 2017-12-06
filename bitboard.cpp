@@ -12,8 +12,8 @@ void init_bitboard_tables(){
 	auto left = [=](BitBoard bb){return (bb >> 1) & ~FILE_H;};
 	auto right = [=](BitBoard bb){return (bb << 1) & ~FILE_A;};
 	for(Square sq = 0;sq < NSquare;sq++){
-		rank_mask_table[sq] = RANK_1 << (sq / 8);
-		file_mask_table[sq] = FILE_A << (sq % 8);
+		rank_mask_table[sq] = RANK_1 << rank(sq) * 8;
+		file_mask_table[sq] = FILE_A << file(sq);
 		//init diag_mask and diag2_mask
 		BitBoard diag1 = bb_sq(sq);
 		while(true){
@@ -71,7 +71,6 @@ void init_bitboard_tables(){
 			file_attack_table[i][occ] = f_attack;
 		}
 	}
-	std::cout << show_bb(file_attack_table[0][0x21]) << std::endl;
 	//init sandwiched squares
 	for(Square sq1 = 0;sq1 < NSquare;sq1++){
 		for(Square sq2 = 0; sq2 < NSquare; sq2++){
