@@ -109,7 +109,8 @@ int Position::generate_important_moves(Array<Move, MaxLegalMove>& moves,int n_mo
 		if(board[bsf(target)] == Pawn){
 			target |= enpassant_bb;
 		}
-		n_moves = generate_piece_moves<Pawn>(moves, n_moves, target);
+		if(turn == White)n_moves = generate_pawn_moves<White>(moves, n_moves, target);
+		else n_moves = generate_pawn_moves<Black>(moves, n_moves, target);
 		return n_moves;
 	}
 	//Generate captures
