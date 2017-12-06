@@ -60,15 +60,18 @@ void init_bitboard_tables(){
 				f_attack |= 1ULL << (j * 8);
 				if(occupied & (1ULL << j))break;
 			}
-			for(int j=1;j<8;j++){
-				rd_attack |= rd_attack << (j * 8);
-				f_attack |= f_attack << j;
-			}
+			if(f_attack & ~FILE_A){std::cout <<"!"<<std::endl;}
+			rd_attack |= rd_attack << 1 * 8;
+			rd_attack |= rd_attack << 2 * 8;
+			rd_attack |= rd_attack << 4 * 8;
+			f_attack |= f_attack << 1;
+			f_attack |= f_attack << 2;
+			f_attack |= f_attack << 4;
 			rank_diag_attack_table[i][occ] = rd_attack;
 			file_attack_table[i][occ] = f_attack;
 		}
 	}
-	
+	std::cout << show_bb(file_attack_table[0][0x21]) << std::endl;
 	//init sandwiched squares
 	for(Square sq1 = 0;sq1 < NSquare;sq1++){
 		for(Square sq2 = 0; sq2 < NSquare; sq2++){
