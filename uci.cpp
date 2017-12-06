@@ -60,9 +60,8 @@ void uci_loop(){
 			pos.to_fen();
 			Array<Move, MaxLegalMove> moves;
 			int n = pos.generate_important_moves(moves, 0);
-			std::cout << n << std::endl;
+			std::cout << n <<"!!!"<< std::endl;
 			n = pos.generate_unimportant_moves(moves, n);
-			std::cout << n << std::endl;
 			for(int i=0;i<n;i++){
 				std::cout << moves[i].to_fen() << " ";
 			}

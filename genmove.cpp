@@ -95,13 +95,12 @@ int Position::generate_important_moves(Array<Move, MaxLegalMove>& moves,int n_mo
 	if(check()){
 		//Generate all moves when check
 		Square ksq = king_sq[turn];
-		BitBoard target = ~0ULL;
 		//evasion king
-		n_moves = generate_piece_moves<King>(moves, n_moves, target);
+		n_moves = generate_piece_moves<King>(moves, n_moves, ~occupied[turn]);
 		BitBoard checking_pieces = attackers(opponent(turn), ksq);
 		if(more_than_one(checking_pieces))return n_moves;
 		//capture or prevent sliding_attack
-		target = checking_pieces | sandwiched_squares[ksq][bsf(checking_pieces)];
+		BitBoard target = checking_pieces | sandwiched_squares[ksq][bsf(checking_pieces)];
 		n_moves = generate_piece_moves<Knight>(moves, n_moves, target);
 		n_moves = generate_piece_moves<Bishop>(moves, n_moves, target);
 		n_moves = generate_piece_moves<Rook>(moves, n_moves, target);
@@ -145,7 +144,7 @@ int Position::generate_important_moves(Array<Move, MaxLegalMove>& moves,int n_mo
 	return n_moves;
 }
 int Position::generate_unimportant_moves(Array<Move, MaxLegalMove>& moves, int n_moves)const{
-	if(check())return 0;
+	if(check())return n_moves;
 	BitBoard target = ~all_bb;
 	n_moves = generate_piece_moves<Knight>(moves, n_moves, target);
 	n_moves = generate_piece_moves<Bishop>(moves, n_moves, target);
