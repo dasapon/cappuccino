@@ -7,6 +7,27 @@ Array<BitBoardTable, NSquare> sandwiched_squares;
 
 static Array<Array<BitBoard, 64>, 8> rank_diag_attack_table, file_attack_table;
 
+
+static inline BitBoard rank_diag_attack(Square sq, BitBoard occupied, BitBoard mask){
+	occupied &= mask;
+	return rank_diag_attack_table[file(sq)][(occupied * FILE_B) >> 58] & mask;
+}
+static inline BitBoard file_attack(Square sq, BitBoard occupied){
+	constexpr BitBoard magic = 0x0204081020408000ULL;
+	/*
+	 * H0000000		01000000	00BCDEFG
+	 * G0000000		00100000	00000000
+	 * F0000000		00010000	00000000
+	 * E0000000		00001000	00000000
+	 * D0000000		00000100	00000000
+	 * C0000000		00000010	00000000
+	 * B0000000		00000001	00000000
+	 * A0000000		00000000	00000000
+	 * */
+	 BitBoard mask = file_mask_table[sq];
+	 return file_attack_table[rank(sq)][(((mask & occupied) >> file(sq)) * magic) >> 58] & mask;
+}
+
 void init_bitboard_tables(){
 	
 	auto left = [=](BitBoard bb){return (bb >> 1) & ~FILE_H;};
@@ -75,7 +96,11 @@ void init_bitboard_tables(){
 	for(Square sq1 = 0;sq1 < NSquare;sq1++){
 		for(Square sq2 = 0; sq2 < NSquare; sq2++){
 			BitBoard bb = bb_sq(sq1) | bb_sq(sq2);
-			sandwiched_squares[sq1][sq2] = queen_attack(sq1, bb) | queen_attack(sq2, bb);
+			sandwiched_squares[sq1][sq2] =
+				(rank_diag_attack(sq1, bb, rank_mask_table[sq1]) & rank_diag_attack(sq2, bb, rank_mask_table[sq2]))
+				| (rank_diag_attack(sq1, bb, diag_mask_table[sq1]) & rank_diag_attack(sq2, bb, diag_mask_table[sq2]))
+				| (rank_diag_attack(sq1, bb, diag2_mask_table[sq1]) & rank_diag_attack(sq2, bb, diag2_mask_table[sq2]))
+				| (file_attack(sq1, bb) & file_attack(sq2, bb));
 		}
 	}
 }
@@ -93,33 +118,14 @@ std::string show_bb(const BitBoard bb){
 	return ret;
 }
 
-static inline BitBoard rank_diag_attack(Square sq, BitBoard occupied, BitBoard mask){
-	occupied &= mask;
-	return rank_diag_attack_table[file(sq)][(occupied * FILE_B) >> 58] & mask;
-}
-
 BitBoard bishop_attack(Square sq, BitBoard occupied){
 	return rank_diag_attack(sq, occupied, diag_mask_table[sq])
 		| rank_diag_attack(sq, occupied, diag2_mask_table[sq]);
 }
 
 BitBoard rook_attack(Square sq, BitBoard occupied){
-	BitBoard rank_attack = rank_diag_attack(sq, occupied, rank_mask_table[sq]);
 	//calculate file attack
-	constexpr BitBoard magic = 0x0204081020408000ULL;
-	/*
-	 * H0000000		01000000	00BCDEFG
-	 * G0000000		00100000	00000000
-	 * F0000000		00010000	00000000
-	 * E0000000		00001000	00000000
-	 * D0000000		00000100	00000000
-	 * C0000000		00000010	00000000
-	 * B0000000		00000001	00000000
-	 * A0000000		00000000	00000000
-	 * */
-	 BitBoard mask = file_mask_table[sq];
-	 BitBoard file_attack = file_attack_table[rank(sq)][(((mask & occupied) >> file(sq)) * magic) >> 58] & mask;
-	 return file_attack | rank_attack;
+	 return rank_diag_attack(sq, occupied, rank_mask_table[sq]) | file_attack(sq, occupied);
 }
 
 BitBoard queen_attack(Square sq, BitBoard occupied){
