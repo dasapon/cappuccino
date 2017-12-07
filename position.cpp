@@ -71,15 +71,15 @@ void Position::make_move(Move move){
 		castling_flags[turn][CastlingFlag::Long] = false;
 		king_sq[turn] = to;
 	}
-	else if(move.piece() == Rook){
-		if(from == rook_ini[turn][CastlingFlag::Short]){
-			castling_flags[turn][CastlingFlag::Short] = false;
-		}
-		else if(from == rook_ini[turn][CastlingFlag::Long]){
-			castling_flags[turn][CastlingFlag::Long] = false;
+	else{
+		for(int castle_flag = 0;castle_flag!=CastlingFlagDim;castle_flag++){
+			Square sq = rook_ini[turn][castle_flag];
+			if(from == sq || to == sq){
+				castling_flags[turn][castle_flag] = false;
+			}
 		}
 	}
-	else if(move.piece() == Pawn){
+	if(move.piece() == Pawn){
 		if(std::abs(from - to) == 16){
 			enpassant_bb = bb_sq((from + to) / 2);
 		}
