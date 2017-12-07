@@ -32,6 +32,9 @@ public:
 		assert_(idx);
 		return array_[idx];
 	}
+	void operator=(const Array<Ty, Size> & a){
+		for(int i=0;i<Size;i++)(*this)[i] = a[i];
+	}
 };
 
 using BitBoard = uint64_t;

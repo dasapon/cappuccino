@@ -1,4 +1,5 @@
 #include "position.hpp"
+#include "state.hpp"
 
 static std::vector<std::string> split(std::string str){
 	std::vector<std::string> ret;
@@ -10,7 +11,7 @@ static std::vector<std::string> split(std::string str){
 	return ret;
 }
 void uci_loop(){
-	Position pos;
+	State state;
 	while(true){
 		std::string str;
 		std::getline(std::cin, str);
@@ -29,24 +30,7 @@ void uci_loop(){
 		else if(cmds[0] == "setoption"){
 		}
 		else if(cmds[0] == "position"){
-			int i = 1;
-			if(cmds[i++] == "startpos"){
-				pos.load_fen(startpos);
-			}
-			else {
-				assert(cmds[1] == "fen");
-				FEN fen;
-				assert(cmds.size() >= 2 + FEN::size());
-				for(int j=0;j<FEN::size();j++){
-					fen[j] = cmds[i++];
-				}
-				pos.load_fen(fen);
-			}
-			if(cmds.size() > i && cmds[i++]=="moves"){
-				for(;i<cmds.size();i++){
-					pos.make_move(pos.str2move(cmds[i]));
-				}
-			}
+			state.set_up(cmds);
 		}
 		else if(cmds[0] == "go"){
 		
@@ -57,8 +41,8 @@ void uci_loop(){
 		}
 		//debug commands
 		else if(cmds[0] == "genmove"){
-			pos.to_fen();
 			Array<Move, MaxLegalMove> moves;
+			const Position& pos = state.pos();
 			int n = pos.generate_important_moves(moves, 0);
 			n = pos.generate_unimportant_moves(moves, n);
 			std::cout << n << " ";
