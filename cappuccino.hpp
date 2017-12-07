@@ -16,7 +16,7 @@ class Array{
 	void assert_(int idx)const{assert(idx >= 0);assert(idx < Size);}
 public:
 	Array(){}
-	explicit Array(std::initializer_list<Ty> init){
+	explicit Array(const std::initializer_list<Ty> init){
 		auto itr = init.begin();
 		for(int i=0;i<Size && i < init.size();i++){
 			array_[i] = *itr;
@@ -80,5 +80,5 @@ constexpr int MaxLegalMove = 256;
 using FEN = Array<std::string, 6>;
 
 class Position;
-extern uint64_t performance_test(Position&, int);
+extern bool unit_test_perft();
 extern void uci_loop();
