@@ -1,3 +1,5 @@
+#pragma once
+
 #include "position.hpp"
 #include "move.hpp"
 
@@ -17,6 +19,7 @@ public:
 		if(positions.size() < 128)positions.resize(ply + 200);
 		positions[0] = Position(fen);
 	}
+	State(){init(startpos);}
 	void set_up(const std::vector<std::string>& cmds){
 		int i = 1;
 		FEN fen;

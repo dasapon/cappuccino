@@ -9,6 +9,8 @@
 #include <algorithm>
 #include <sstream>
 #include <initializer_list>
+#include <cstdint>
+#include <thread>
 
 template<typename Ty, size_t Size>
 class Array{
@@ -86,3 +88,13 @@ class Position;
 extern uint64_t perft(Position&, int);
 extern bool unit_test_perft();
 extern void uci_loop();
+
+enum{
+	MateValue = 32000,
+	AlmostWin = 9999, 
+	PawnValue = 100,
+	KnightValue = 300,
+	BishopValue = 300,
+	RookValue = 500,
+	QueenValue = 900,
+};

@@ -1,5 +1,6 @@
 #include "position.hpp"
 #include "state.hpp"
+#include "search.hpp"
 
 static std::vector<std::string> split(std::string str){
 	std::vector<std::string> ret;
@@ -12,6 +13,7 @@ static std::vector<std::string> split(std::string str){
 }
 void uci_loop(){
 	State state;
+	Searcher searcher;
 	while(true){
 		std::string str;
 		std::getline(std::cin, str);
@@ -33,7 +35,7 @@ void uci_loop(){
 			state.set_up(cmds);
 		}
 		else if(cmds[0] == "go"){
-		
+			searcher.think(state, 1, true);
 		}
 		else if(cmds[0] == "stop"){
 		}
@@ -51,6 +53,9 @@ void uci_loop(){
 				std::cout << moves[i].to_fen() << " ";
 			}
 			std::cout << std::endl;
+		}
+		else if(cmds[0] == "eval"){
+			std::cout << state.pos().evaluate() << std::endl;
 		}
 	}
 }

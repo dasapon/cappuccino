@@ -44,6 +44,13 @@ inline Square pop_one(BitBoard& bb){
 inline bool more_than_one(BitBoard bb){
 	return (bb & (bb - 1)) != 0;
 }
+inline int popcnt(BitBoard bb){
+#ifdef _WIN64
+	return static_cast<int>(__popcnt64(bb));
+#elif defined(__x86_64__)
+	return __builtin_popcountll(bb);
+#endif
+}
 
 extern void init_bitboard_tables();
 

@@ -21,7 +21,7 @@ class Position{
 	Player turn;
 	Array<Array<bool, PlayerDim>, CastlingFlagDim> castling_flags;
 	BitBoard enpassant_bb;
-	BitBoard get_bb(Player turn, Piece piece){return occupied[turn] & pieces[piece];}
+	BitBoard get_bb(Player turn, Piece piece)const {return occupied[turn] & pieces[piece];}
 	void xor_piece(Player turn, Piece piece, Square sq);
 	template<Piece piece>
 	int generate_piece_moves(Array<Move, MaxLegalMove>&, int idx, const BitBoard target)const;
@@ -45,5 +45,6 @@ public:
 	Player turn_player()const{return turn;}
 	bool check()const{return is_attacked(opponent(turn), king_sq[turn]);}
 	bool is_suicide_move(Move move) const;
-	FEN to_fen()const;
+	int evaluate()const;
+	bool immediately_draw()const;
 };

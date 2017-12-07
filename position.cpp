@@ -189,7 +189,7 @@ Move Position::str2move(std::string move_str)const{
 	for(int i=0;i<n;i++){
 		if(move_str == moves[i].to_fen())return moves[i];
 	}
-	return Move::NullMove();
+	return NullMove;
 }
 
 void Position::init_hash_seed(){
@@ -202,17 +202,8 @@ void Position::init_hash_seed(){
 	}
 }
 
-FEN Position::to_fen()const{
-	FEN fen;
-	std::cout << show_bb(all_bb)<<std::endl;
-	//board
-	//turn
-	//castling
-	//enpassant
-	if(enpassant_bb){
-		fen[3] = square_string(bsf(enpassant_bb));
-	}
-	//halfmove
-	//fullmove
-	return fen;
+bool Position::immediately_draw()const{
+	if(half_move_counter >= 100)return true;
+	int n = popcnt(all_bb);
+	return n == 2 || (n == 3 && (pieces[Knight] | pieces[Bishop]) != 0);
 }
