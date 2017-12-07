@@ -63,6 +63,7 @@ void uci_loop(){
 			n = pos.generate_unimportant_moves(moves, n);
 			std::cout << n << " ";
 			for(int i=0;i<n;i++){
+				if(pos.is_suicide_move(moves[i]))continue;
 				std::cout << moves[i].to_fen() << " ";
 			}
 			std::cout << std::endl;

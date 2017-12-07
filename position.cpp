@@ -122,8 +122,8 @@ void Position::load_fen(const FEN& fen){
 	for(Square i=0;i<NSquare;i++)board[i] = Empty;
 	hash_key = 0;
 	castling_flags[White][CastlingFlag::Short] = false;
-	castling_flags[Black][CastlingFlag::Long] = false;
-	castling_flags[White][CastlingFlag::Short] = false;
+	castling_flags[White][CastlingFlag::Long] = false;
+	castling_flags[Black][CastlingFlag::Short] = false;
 	castling_flags[Black][CastlingFlag::Long] = false;
 	enpassant_bb = 0;
 	//init board
