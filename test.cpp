@@ -1,6 +1,6 @@
 #include "position.hpp"
 
-static uint64_t perft(Position& pos, int depth){
+uint64_t perft(Position& pos, int depth){
 	if(depth == 0)return 1;
 	Array<Move, MaxLegalMove> moves;
 	int n = pos.generate_important_moves(moves, 0);
@@ -25,7 +25,7 @@ bool unit_test_perft(){
 		FEN({"rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R", "w", "KQ", "-", "1", "8"}),
 		FEN({"r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1","w","-","-","0","10"}),});
 	const Array<uint64_t, 6> results({4865609, 193690690, 674624, 15833292, 89941194, 164075551});
-	bool ok = false;
+	bool ok = true;
 	for(int i=0;i<6;i++){
 		Position pos(fens[i]);
 		uint64_t result = perft(pos, 5);

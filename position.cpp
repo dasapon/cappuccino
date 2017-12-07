@@ -60,7 +60,7 @@ void Position::make_move(Move move){
 	if(move.is_castling()){
 		//Move Rook
 		Square rook_to = (from + to) / 2;
-		Square rook_from = (to - from) / 2 + to;
+		Square rook_from = rook_ini[turn][to > from? CastlingFlag::Short : CastlingFlag::Long];
 		xor_piece(turn, Rook, rook_from);
 		xor_piece(turn, Rook, rook_to);
 	}
@@ -71,17 +71,25 @@ void Position::make_move(Move move){
 		castling_flags[turn][CastlingFlag::Long] = false;
 		king_sq[turn] = to;
 	}
-	else{
+	else if(move.piece() == Rook){
 		for(int castle_flag = 0;castle_flag!=CastlingFlagDim;castle_flag++){
 			Square sq = rook_ini[turn][castle_flag];
-			if(from == sq || to == sq){
+			if(from == sq){
 				castling_flags[turn][castle_flag] = false;
 			}
 		}
 	}
-	if(move.piece() == Pawn){
+	else if(move.piece() == Pawn){
 		if(std::abs(from - to) == 16){
 			enpassant_bb = bb_sq((from + to) / 2);
+		}
+	}
+	if(move.capture() == Rook){
+		for(int castle_flag = 0;castle_flag!=CastlingFlagDim;castle_flag++){
+			Square sq = rook_ini[opponent(turn)][castle_flag];
+			if(to == sq){
+				castling_flags[opponent(turn)][castle_flag] = false;
+			}
 		}
 	}
 	turn = opponent(turn);
