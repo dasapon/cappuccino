@@ -19,13 +19,21 @@ int Searcher::think(State& state, int max_depth, PV& pv, bool print){
 			}
 		}
 		std::cout << std::endl;
+		if(pv[0] != NullMove){
+			std::cout << "bestmove " << pv[0].to_fen() << std::endl;
+		}
+		else{
+			std::cout << "bestmove resign"<<std::endl;
+		}
 	}
 	return ret;
 }
 
 void Searcher::go(State& state){
+	stop();
+	stop_recieved = false;
 	main_thread = std::thread([&](){
-		think(state, 3, true);
+		think(std::ref(state), 3, true);
 	});
 }
 
@@ -53,7 +61,6 @@ int Searcher::search(State& state, int alpha, int beta, int depth, int ply, PV& 
 		searched_count++;
 		int v = -search_w(state, -beta, -alpha, depth - 1, ply + 1, pv);
 		state.unmake_move();
-		if(ply == 0)std::cout << move.to_fen() <<":"<< v << std::endl;
 		if(v > best_value){
 			best_value = v;
 			best_move = move;
@@ -97,7 +104,6 @@ int Searcher::qsearch(State& state, int alpha, int beta, int depth, int ply, PV&
 		searched_count++;
 		int v = -search_w(state, -beta, -alpha, depth - 1, ply + 1, pv);
 		state.unmake_move();
-		std::cout << " " << move.to_fen() << v << std::endl;
 		if(v > best_value){
 			best_value = v;
 			best_move = move;

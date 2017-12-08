@@ -10,7 +10,7 @@ class MoveOrderer{
 	Array<Move, MaxLegalMove> moves;
 	const Position& pos;
 public:
-	MoveOrderer(const Position& pos, bool quiescence):pos(pos){
+	MoveOrderer(const Position& pos, bool quiescence):idx(0), pos(pos){
 		n_moves = pos.generate_important_moves(moves, 0);
 		if(!quiescence)n_moves = pos.generate_unimportant_moves(moves, n_moves);
 	}
@@ -32,7 +32,13 @@ class Searcher{
 	std::thread main_thread;
 	bool stop_recieved;
 public:
-	void stop(){stop_recieved = true;}
+	~Searcher(){
+		if(main_thread.joinable())main_thread.join();
+	}
+	void stop(){
+		stop_recieved = true;
+		if(main_thread.joinable())main_thread.join();
+	}
 	void go(State& state);
 	int think(State& state, int max_depth, PV& pv, bool print);
 	int think(State& state, int max_depth, bool print);
