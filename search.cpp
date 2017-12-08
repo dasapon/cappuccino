@@ -7,18 +7,28 @@ int Searcher::think(State& state, int max_depth, bool print){
 }
 
 int Searcher::think(State& state, int max_depth, PV& pv, bool print){
-	int ret = search(state, -MateValue, MateValue, max_depth, 0, pv);
-	if(print){
-		std::cout << "info depth " << max_depth;
-		std::cout << " time 0";
-		std::cout << " score cp " << ret;
-		if(pv[0] != NullMove){
-			std::cout << " pv";
-			for(int i = 0;pv[i] != NullMove;i++){
-				std::cout << " " << pv[i].to_fen();
+	int ret = 0;
+	nodes = 0;
+	for(int depth = 1; depth <= max_depth; depth++){
+		ret = search(state, -MateValue, MateValue, depth, 0, pv);
+		//print info
+		if(print){
+			std::cout << "info depth " << depth;
+			std::cout << " time 0";
+			std::cout << " nodes " << nodes;
+			std::cout << " score cp " << ret;
+			if(pv[0] != NullMove){
+				std::cout << " pv";
+				for(int i = 0;pv[i] != NullMove;i++){
+					std::cout << " " << pv[i].to_fen();
+				}
 			}
+			std::cout << std::endl;
 		}
-		std::cout << std::endl;
+		if(std::abs(ret) >= MateValue)break;
+	}
+	//bestmove
+	if(print){
 		if(pv[0] != NullMove){
 			std::cout << "bestmove " << pv[0].to_fen() << std::endl;
 		}
@@ -33,7 +43,7 @@ void Searcher::go(State& state){
 	stop();
 	stop_recieved = false;
 	main_thread = std::thread([&](){
-		think(std::ref(state), 3, true);
+		think(std::ref(state), 7, true);
 	});
 }
 
@@ -49,7 +59,7 @@ int Searcher::search(State& state, int alpha, int beta, int depth, int ply, PV& 
 	PV pv;
 	int best_value = -MateValue;
 	Move best_move = NullMove;
-	int searched_count = 0;
+	bool legal_move_exist = false;
 	//is draw?
 	if(pos.immediately_draw() && ply > 0)return 0;
 	//generate moves
@@ -58,7 +68,8 @@ int Searcher::search(State& state, int alpha, int beta, int depth, int ply, PV& 
 		Move move = move_orderer.next();
 		if(move == NullMove)break;
 		state.make_move(move);
-		searched_count++;
+		legal_move_exist = true;
+		nodes++;
 		int v = -search_w(state, -beta, -alpha, depth - 1, ply + 1, pv);
 		state.unmake_move();
 		if(v > best_value){
@@ -74,7 +85,7 @@ int Searcher::search(State& state, int alpha, int beta, int depth, int ply, PV& 
 		}
 	}
 	//stalemate
-	if(searched_count == 0 && !check)best_value = 0;
+	if(!legal_move_exist && !check)best_value = 0;
 	return best_value;
 }
 int Searcher::qsearch(State& state, int alpha, int beta, int depth, int ply, PV& pv_old){
@@ -85,7 +96,6 @@ int Searcher::qsearch(State& state, int alpha, int beta, int depth, int ply, PV&
 	PV pv;
 	int best_value = -MateValue;
 	Move best_move = NullMove;
-	int searched_count = 0;
 	//is draw?
 	if(pos.immediately_draw())return 0;
 	//stand pat
@@ -101,7 +111,7 @@ int Searcher::qsearch(State& state, int alpha, int beta, int depth, int ply, PV&
 		Move move = move_orderer.next();
 		if(move == NullMove)break;
 		state.make_move(move);
-		searched_count++;
+		nodes++;
 		int v = -search_w(state, -beta, -alpha, depth - 1, ply + 1, pv);
 		state.unmake_move();
 		if(v > best_value){

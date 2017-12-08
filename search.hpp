@@ -31,6 +31,7 @@ class Searcher{
 	int search_w(State& state, int alpha, int beta, int depth, int ply, PV& pv_old);
 	std::thread main_thread;
 	bool stop_recieved;
+	uint64_t nodes;
 public:
 	~Searcher(){
 		if(main_thread.joinable())main_thread.join();

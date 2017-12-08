@@ -1,5 +1,4 @@
 transposition table
-iterative deepning
 move ordering(mvv lva)
 static exchange evaluation
 parallel search
@@ -7,4 +6,3 @@ detect perpetual draw
 time control
 ponder
 endgame knowledge(K + B + B vs K, K + B + N vs K)
-
