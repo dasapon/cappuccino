@@ -33,7 +33,7 @@ BitBoard Position::attackers(Player us, Square sq)const{
 	ret |= pawn_attack_table[opponent(us)][sq] & occupied[us] & pieces[Pawn];
 	return ret;
 }
-int enpassant_count = 0;
+
 void Position::make_move(Move move){
 	Square from = move.from(), to = move.to();
 	Piece captured = move.capture();
@@ -41,7 +41,6 @@ void Position::make_move(Move move){
 	if(captured != Empty){
 		if(bb_sq(to) == enpassant_bb){//enpassant
 			assert(captured == Pawn);
-			enpassant_count++;
 			if(turn == White){
 				xor_piece(Black, captured, to - 8);
 			}
@@ -194,7 +193,7 @@ Move Position::str2move(std::string move_str)const{
 
 void Position::init_hash_seed(){
 	std::mt19937 mt(0);
-	for(Piece p = Pawn; p != PieceDim;p++){
+	for(Piece p = Empty; p != PieceDim;p++){
 		for(Square sq = 0;sq < NSquare; sq++){
 			hash_seed[White][p][sq] = mt() & ~1ULL;
 			hash_seed[Black][p][sq] = mt() & ~1ULL;

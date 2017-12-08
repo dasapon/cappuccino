@@ -10,7 +10,6 @@ class Position{
 	};
 	static const Square rook_ini[PlayerDim][CastlingFlagDim];
 	static Array<Array<Array<uint64_t, NSquare>, PieceDim>, PlayerDim> hash_seed;
-	
 	Array<BitBoard, PlayerDim> occupied;
 	Array<BitBoard, PieceDim> pieces;
 	BitBoard all_bb;
@@ -47,4 +46,13 @@ public:
 	bool is_suicide_move(Move move) const;
 	int evaluate()const;
 	bool immediately_draw()const;
+	uint64_t key()const{
+		uint64_t ret = hash_key;
+		ret ^= enpassant_bb;
+		if(castling_flags[White][CastlingFlag::Short])ret ^= hash_seed[White][Empty][0];
+		if(castling_flags[White][CastlingFlag::Long])ret ^= hash_seed[White][Empty][1];
+		if(castling_flags[Black][CastlingFlag::Short])ret ^= hash_seed[White][Empty][2];
+		if(castling_flags[Black][CastlingFlag::Long])ret ^= hash_seed[White][Empty][3];
+		return ret;
+	}
 };
