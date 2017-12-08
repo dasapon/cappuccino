@@ -1,4 +1,3 @@
-async "go" command
 hash of enpassant and castling
 transposition table
 iterative deepning

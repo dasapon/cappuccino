@@ -35,7 +35,7 @@ void uci_loop(){
 			state.set_up(cmds);
 		}
 		else if(cmds[0] == "go"){
-			searcher.think(state, 1, true);
+			searcher.go(state);
 		}
 		else if(cmds[0] == "stop"){
 		}

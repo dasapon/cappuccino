@@ -23,6 +23,12 @@ int Searcher::think(State& state, int max_depth, PV& pv, bool print){
 	return ret;
 }
 
+void Searcher::go(State& state){
+	main_thread = std::thread([&](){
+		think(state, 3, true);
+	});
+}
+
 int Searcher::search_w(State& state, int alpha, int beta, int depth, int ply, PV& pv_old){
 	if(depth > 0)return search(state, alpha, beta, depth, ply, pv_old);
 	else return qsearch(state, alpha, beta, depth, ply, pv_old);
