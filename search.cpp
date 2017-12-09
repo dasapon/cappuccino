@@ -25,7 +25,7 @@ int Searcher::think(State& state, int max_depth, PV& pv, bool print){
 			}
 			std::cout << std::endl;
 		}
-		if(std::abs(ret) >= MateValue)break;
+		if(std::abs(ret) >= MateValue || stop_recieved)break;
 	}
 	//bestmove
 	if(print){
@@ -61,7 +61,7 @@ int Searcher::search(State& state, int alpha, int beta, int depth, int ply, PV& 
 	Move best_move = NullMove;
 	bool legal_move_exist = false;
 	//is draw?
-	if(pos.immediately_draw() && ply > 0)return 0;
+	if(state.draw() && ply > 0)return 0;
 	//generate moves
 	MoveOrderer move_orderer(pos, false);
 	while(true){
@@ -97,7 +97,7 @@ int Searcher::qsearch(State& state, int alpha, int beta, int depth, int ply, PV&
 	int best_value = -MateValue;
 	Move best_move = NullMove;
 	//is draw?
-	if(pos.immediately_draw())return 0;
+	if(state.draw())return 0;
 	//stand pat
 	int stand_pat = pos.evaluate();
 	if(!check){

@@ -61,5 +61,8 @@ void uci_loop(){
 		else if(cmds[0] == "eval"){
 			std::cout << state.pos().evaluate() << std::endl;
 		}
+		else if(cmds[0] == "key"){
+			std::cout << state.pos().key() << std::endl;
+		}
 	}
 }

@@ -19,6 +19,14 @@ public:
 		if(positions.size() < 128)positions.resize(ply + 200);
 		positions[0] = Position(fen);
 	}
+	bool draw()const{
+		if(pos().immediately_draw())return true;
+		uint64_t key = pos().key();
+		for(int i = ply-1, e = std::max(0, ply - 8);i >= e; i--){
+			if(positions[i].key() == key)return true;
+		}
+		return false;
+	}
 	State(){init(startpos);}
 	void set_up(const std::vector<std::string>& cmds){
 		int i = 1;
