@@ -1,5 +1,4 @@
 transposition table
-move ordering(mvv lva)
 static exchange evaluation
 parallel search
 detect perpetual draw

@@ -18,7 +18,10 @@ void uci_loop(){
 		std::string str;
 		std::getline(std::cin, str);
 		const std::vector<std::string> cmds = split(str);
-		if(cmds.size() == 0 || cmds[0] == "quit")break;
+		if(cmds.size() == 0 || cmds[0] == "quit"){
+			searcher.stop();
+			break;
+		}
 		if(cmds[0] == "uci"){
 			std::cout << "id name Cappuccino" << std::endl;
 			std::cout << "id auther Watanabe Keisuke" << std::endl;
@@ -38,6 +41,7 @@ void uci_loop(){
 			searcher.go(state);
 		}
 		else if(cmds[0] == "stop"){
+			searcher.stop();
 		}
 		else if(cmds[0] == "ponderhit"){
 		}

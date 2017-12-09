@@ -43,7 +43,7 @@ void Searcher::go(State& state){
 	stop();
 	stop_recieved = false;
 	main_thread = std::thread([&](){
-		think(std::ref(state), 7, true);
+		think(std::ref(state), 8, true);
 	});
 }
 

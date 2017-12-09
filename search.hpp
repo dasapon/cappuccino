@@ -1,6 +1,7 @@
 #pragma once
 
 #include "position.hpp"
+#include "state.hpp"
 
 using PV = Array<Move, 128>;
 
@@ -8,11 +9,19 @@ class MoveOrderer{
 	int n_moves;
 	int idx;
 	Array<Move, MaxLegalMove> moves;
+	Array<float, MaxLegalMove> scores;
 	const Position& pos;
+static float mvv_lva(Move m){
+	return (material_value[m.capture()] << 8) - material_value[m.piece()];
+}
 public:
 	MoveOrderer(const Position& pos, bool quiescence):idx(0), pos(pos){
 		n_moves = pos.generate_important_moves(moves, 0);
 		if(!quiescence)n_moves = pos.generate_unimportant_moves(moves, n_moves);
+		if(quiescence){
+			for(int i=0;i<n_moves;i++)scores[i] = mvv_lva(moves[i]);
+			insertion_sort(0, n_moves);
+		}
 	}
 	Move next(){
 		while(true){
@@ -23,6 +32,7 @@ public:
 			return moves[idx++];
 		}
 	}
+	void insertion_sort(int start, int end);
 };
 
 class Searcher{

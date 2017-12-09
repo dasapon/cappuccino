@@ -98,3 +98,4 @@ enum{
 	RookValue = 500,
 	QueenValue = 900,
 };
+extern const Array<int, PieceDim> material_value;
