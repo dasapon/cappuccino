@@ -118,7 +118,7 @@ int Searcher::qsearch(State& state, int alpha, int beta, int depth, int ply, PV&
 	//is draw?
 	if(state.draw())return 0;
 	//stand pat
-	int stand_pat = pos.evaluate();
+	int stand_pat = evaluate(pos);
 	if(!check){
 		best_value = stand_pat;
 		alpha = std::max(alpha, stand_pat);
@@ -146,4 +146,13 @@ int Searcher::qsearch(State& state, int alpha, int beta, int depth, int ply, PV&
 		}
 	}
 	return best_value;
+}
+
+void Searcher::set_randomness(int sd){
+	std::mt19937 mt(0);
+	std::normal_distribution<double> dist(0, sd);
+	hash_table.clear();
+	for(int i=0;i<0x4000;i++){
+		random_table[i] = dist(mt);
+	}
 }

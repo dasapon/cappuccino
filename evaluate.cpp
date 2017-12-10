@@ -22,7 +22,7 @@ const Array<int, PieceDim> material_value({
 	MateValue,
 });
 
-int Position::evaluate()const{
+int Position::evaluate(int rnd)const{
 	const Player enemy = opponent(turn);
 	//endgame knowledge
 	if(!more_than_one(occupied[turn])){
@@ -38,7 +38,7 @@ int Position::evaluate()const{
 		}
 	}
 	//material value
-	int v = 0;
+	int v = rnd;
 	for(Piece p = Pawn; p != King; p++){
 		v += (popcnt(get_bb(turn, p)) - popcnt(get_bb(enemy, p))) * material_value[p];
 	}

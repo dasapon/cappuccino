@@ -45,7 +45,8 @@ public:
 	bool check()const{return is_attacked(opponent(turn), king_sq[turn]);}
 	bool is_suicide_move(Move move) const;
 	bool is_valid_move(Move move) const;
-	int evaluate()const;
+	int evaluate(int rnd)const;
+	int evaluate()const{return evaluate(0);}
 	bool immediately_draw()const;
 	uint64_t key()const{
 		uint64_t ret = hash_key;
