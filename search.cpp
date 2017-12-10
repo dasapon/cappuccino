@@ -68,6 +68,8 @@ int Searcher::search(State& state, int alpha, int beta, int depth, int ply, PV& 
 	//probe hash table
 	if(hash_table.probe(pos, hash_entry)){
 		hash_move = hash_entry.move();
+		int hash_value;
+		if(hash_entry.hash_cut(hash_value, alpha, beta, depth))return hash_value;
 	}
 	//generate moves
 	MoveOrderer move_orderer(pos, hash_move, false);

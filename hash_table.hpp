@@ -16,8 +16,8 @@ class HashEntry{
 		else if(value >= beta)return lower_bound;
 		else return exact;
 	}
-public:
 	static constexpr uint64_t upper_bound = 0x10, lower_bound = 0x20, exact = 0x30;
+public:
 	HashEntry(){}
 	HashEntry(uint64_t key, Move move, int depth, int value, int alpha, int beta, uint64_t generation){
 		word1 = (key & 0xffffffff00000000)
@@ -28,6 +28,22 @@ public:
 	bool hit(uint64_t key)const{return (key & 0xffffffff00000000) == (word1 & 0xffffffff00000000);}
 	Move move()const{
 		return Move(static_cast<int>(word1 & 0xffffffff));
+	}
+	bool hash_cut(int& value, int alpha, int beta, int depth){
+		int d = static_cast<int>((word2 >> 32) & 0xffff) - 128;
+		if(d >= depth){
+			int v = static_cast<int>(word2 >> 48) - ValueINF;
+			uint64_t flg = word2 & exact;
+			if((flg & upper_bound) != 0 && v <= alpha){
+				value = v;
+				return true;
+			}
+			else if((flg & lower_bound) != 0 && v >= beta){
+				value = v;
+				return true;
+			}
+		}
+		return false;
 	}
 };
 
