@@ -37,7 +37,8 @@ class MoveOrderer{
 	void insertion_sort(int start, int end);
 	
 public:
-	MoveOrderer(const Position& pos, Move hash_move, const KillerMove& killer, bool quiescence);
+	MoveOrderer(const Position& pos, Move hash_move, const KillerMove& killer);
+	MoveOrderer(const Position& pos, Move hash_move);
 	Move next();
 };
 
