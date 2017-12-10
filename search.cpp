@@ -77,10 +77,19 @@ int Searcher::search(State& state, int alpha, int beta, int depth, int ply, PV& 
 		Move move = move_orderer.next();
 		if(move == NullMove)break;
 		state.make_move(move);
-		legal_move_exist = true;
 		nodes++;
-		int v = -search_w(state, -beta, -alpha, depth - 1, ply + 1, pv);
+		int v;
+		if(!legal_move_exist){
+			v = -search_w(state, -beta, -alpha, depth - 1, ply + 1, pv);
+		}
+		else {
+			v = -search_w(state, -alpha-1, -alpha, depth - 1, ply + 1, pv);
+			if(alpha < v && v < beta){
+				v = -search_w(state, -beta, -alpha, depth - 1, ply + 1, pv);
+			}
+		}
 		state.unmake_move();
+		legal_move_exist = true;
 		if(v > best_value){
 			best_value = v;
 			best_move = move;
