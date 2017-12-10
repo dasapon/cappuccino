@@ -44,6 +44,7 @@ public:
 	Player turn_player()const{return turn;}
 	bool check()const{return is_attacked(opponent(turn), king_sq[turn]);}
 	bool is_suicide_move(Move move) const;
+	bool is_valid_move(Move move) const;
 	int evaluate()const;
 	bool immediately_draw()const;
 	uint64_t key()const{

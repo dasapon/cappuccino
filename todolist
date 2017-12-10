@@ -1,4 +1,3 @@
-Position::is_move_valid()
 transposition table
 static exchange evaluation
 parallel search

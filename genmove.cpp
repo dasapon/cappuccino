@@ -129,16 +129,14 @@ int Position::generate_important_moves(Array<Move, MaxLegalMove>& moves,int n_mo
 	if(castling_flags[turn][CastlingFlag::Short]){
 		BitBoard sandwiched = sandwiched_squares[ksq][rook_ini[turn][CastlingFlag::Short]];
 		if((sandwiched & all_bb) == 0
-			&& !is_attacked(opponent(turn), ksq + 1)
-			&& !is_attacked(opponent(turn), ksq + 2)){
+			&& !is_attacked(opponent(turn), ksq + 1)){
 			moves[n_moves++] = Move(King, Empty, ksq, ksq + 2);
 		}
 	}
 	if(castling_flags[turn][CastlingFlag::Long]){
 		BitBoard sandwiched = sandwiched_squares[ksq][rook_ini[turn][CastlingFlag::Long]];
 		if((sandwiched & all_bb) == 0
-			&& !is_attacked(opponent(turn), ksq - 1)
-			&& !is_attacked(opponent(turn), ksq - 2)){
+			&& !is_attacked(opponent(turn), ksq - 1)){
 			moves[n_moves++] = Move(King, Empty, ksq, ksq - 2);
 		}
 	}

@@ -120,6 +120,48 @@ bool Position::is_suicide_move(Move move)const{
 	return is_attacked(opponent(turn), ksq, next_all, ignored);
 }
 
+bool Position::is_valid_move(Move move)const{
+	Piece piece = move.piece();
+	Piece capture = move.capture();
+	Square from = move.from();
+	Square to = move.to();
+	BitBoard to_bb = bb_sq(to);
+	BitBoard from_bb = bb_sq(from);
+	if((get_bb(turn, piece) & from_bb) == 0)return false;
+	if(move.piece() == Pawn){
+		if(capture != Empty){
+			if(to_bb == enpassant_bb)return capture == Pawn;
+			else return (get_bb(opponent(turn), capture) & to_bb) != 0;
+		}
+		else{
+			if(turn == White){
+				BitBoard push = pawn_push<White>(from_bb, all_bb);
+				push |= pawn_push<White>(push, all_bb);
+				return (push & to_bb) != 0;
+			}
+			else{
+				BitBoard push = pawn_push<Black>(from_bb, all_bb);
+				push |= pawn_push<Black>(push, all_bb);
+				return (push & to_bb) != 0;
+			}
+		}
+	}
+	else if(move.is_castling()){
+		if(check())return false;
+		CastlingFlag side = to > from ? Short : Long;
+		return castling_flags[turn][side] 
+			&& (all_bb & sandwiched_squares[from][rook_ini[turn][side]]) == 0
+			&& !is_attacked(opponent(turn), (from + to) / 2);
+		return true;
+	}
+	else {
+		bool capture_is_ok = capture == Empty? ((all_bb & to_bb) == 0)
+			: ((get_bb(opponent(turn), capture) & to_bb) != 0);
+		return capture_is_ok
+			&& (all_bb & sandwiched_squares[from][to]) == 0;
+	}
+}
+
 void Position::load_fen(const FEN& fen){
 	//zero clear
 	occupied[White] = occupied[Black] = all_bb = 0;

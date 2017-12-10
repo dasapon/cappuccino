@@ -7,6 +7,7 @@ uint64_t perft(Position& pos, int depth){
 	n = pos.generate_unimportant_moves(moves, n);
 	uint64_t ret = 0;
 	for(int i=0;i<n;i++){
+		if(!pos.is_valid_move(moves[i]))return ret;
 		if(pos.is_suicide_move(moves[i]))continue;
 		Position next(pos);
 		next.make_move(moves[i]);
