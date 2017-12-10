@@ -49,6 +49,14 @@ Move MoveOrderer::next(){
 			case Hash:
 				//generate moves
 				n_moves = pos.generate_important_moves(moves, n_moves);
+				for(int i=idx;i<n_moves;i++){
+					if(moves[i] == hash_move)moves[i--] = moves[--n_moves];
+					else scores[i] = mvv_lva(moves[i]);
+				}
+				insertion_sort(idx, n_moves);
+				status = Important;
+				if(n_moves > idx)break;
+			case Important:
 				n_moves = pos.generate_unimportant_moves(moves, n_moves);
 				for(int i=idx;i<n_moves;i++){
 					if(moves[i] == hash_move)moves[i--] = moves[--n_moves];

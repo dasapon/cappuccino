@@ -9,6 +9,7 @@ using PV = Array<Move, 128>;
 class MoveOrderer{
 	enum Status{
 		Hash,
+		Important,
 		All,
 	};
 	Status status;
