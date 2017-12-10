@@ -17,17 +17,18 @@ class HashEntry{
 		else return exact;
 	}
 	static constexpr uint64_t upper_bound = 0x10, lower_bound = 0x20, exact = 0x30;
+	static constexpr uint64_t key_mask = 0xffffffff00000000ULL;
 public:
 	HashEntry(){}
 	HashEntry(uint64_t key, Move move, int depth, int value, int alpha, int beta, uint64_t generation){
-		word1 = (key & 0xffffffff00000000)
+		word1 = (key & key_mask)
 			| move.to_int();
 		word2 = (static_cast<uint64_t>(value + ValueINF) << 48) | (static_cast<uint64_t>(depth + 128) << 32)
 			| get_flag(alpha, beta, value) | generation;
 	}
-	bool hit(uint64_t key)const{return (key & 0xffffffff00000000) == (word1 & 0xffffffff00000000);}
+	bool hit(uint64_t key)const{return (key & key_mask) == (word1 & key_mask);}
 	Move move()const{
-		return Move(static_cast<int>(word1 & 0xffffffff));
+		return Move(static_cast<int>(word1 & ~key_mask));
 	}
 	bool hash_cut(int& value, int alpha, int beta, int depth){
 		int d = static_cast<int>((word2 >> 32) & 0xffff) - 128;
