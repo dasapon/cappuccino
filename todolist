@@ -1,4 +1,4 @@
-transposition table
+transposition table cutoff
 static exchange evaluation
 parallel search
 time control
@@ -6,4 +6,5 @@ ponder
 endgame knowledge(K + B + B vs K, K + B + N vs K)
 futility pruning
 late move reduction
-
+randomized evaluation function
+realization probability based alpha-beta

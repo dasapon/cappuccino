@@ -11,7 +11,8 @@
 class Move{
 	int move_;
 public:
-	constexpr Move(int i):move_(i){}
+	constexpr Move(const int i, int j):move_(i){}
+	Move(int i):move_(i){}
 	Move(){}
 	bool operator==(Move m)const{return move_ == m.move_;}
 	bool operator!=(Move m)const{return move_ != m.move_;}
@@ -45,6 +46,7 @@ public:
 	bool is_castling()const{
 		return piece() == King && std::abs(from() - to()) == 2;
 	}
+	int32_t to_int()const{return move_;}
 	std::string to_fen()const{
 		if(is_promotion()){
 			return square_string(from()) + square_string(to()) + piece_char(Black, piece_moved());
@@ -54,4 +56,4 @@ public:
 		}
 	}
 };
-constexpr Move NullMove(0);
+constexpr Move NullMove(0, 0);

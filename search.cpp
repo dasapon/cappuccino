@@ -9,6 +9,7 @@ int Searcher::think(State& state, int max_depth, bool print){
 int Searcher::think(State& state, int max_depth, PV& pv, bool print){
 	int ret = 0;
 	nodes = 0;
+	hash_table.new_gen();
 	for(int depth = 1; depth <= max_depth; depth++){
 		ret = search(state, -MateValue, MateValue, depth, 0, pv);
 		//print info
@@ -43,7 +44,7 @@ void Searcher::go(State& state){
 	stop();
 	stop_recieved = false;
 	main_thread = std::thread([&](){
-		think(std::ref(state), 8, true);
+		think(std::ref(state), 10, true);
 	});
 }
 
@@ -53,17 +54,23 @@ int Searcher::search_w(State& state, int alpha, int beta, int depth, int ply, PV
 }
 int Searcher::search(State& state, int alpha, int beta, int depth, int ply, PV& pv_old){
 	pv_old[ply] = NullMove;
-	//const int old_alpha = alpha;
+	const int old_alpha = alpha;
 	const Position& pos = state.pos();
 	const bool check = pos.check();
 	PV pv;
 	int best_value = -MateValue;
+	Move hash_move = NullMove;
+	HashEntry hash_entry;
 	Move best_move = NullMove;
 	bool legal_move_exist = false;
 	//is draw?
 	if(state.draw() && ply > 0)return 0;
+	//probe hash table
+	if(hash_table.probe(pos, hash_entry)){
+		hash_move = hash_entry.move();
+	}
 	//generate moves
-	MoveOrderer move_orderer(pos, false);
+	MoveOrderer move_orderer(pos, hash_move, false);
 	while(true){
 		Move move = move_orderer.next();
 		if(move == NullMove)break;
@@ -86,6 +93,7 @@ int Searcher::search(State& state, int alpha, int beta, int depth, int ply, PV& 
 	}
 	//stalemate
 	if(!legal_move_exist && !check)best_value = 0;
+	hash_table.store(pos, best_move, depth, best_value, old_alpha, beta);
 	return best_value;
 }
 int Searcher::qsearch(State& state, int alpha, int beta, int depth, int ply, PV& pv_old){
@@ -106,7 +114,7 @@ int Searcher::qsearch(State& state, int alpha, int beta, int depth, int ply, PV&
 		if(stand_pat >= beta)return stand_pat;
 	}
 	//generate moves
-	MoveOrderer move_orderer(pos, true);
+	MoveOrderer move_orderer(pos, NullMove, true);
 	while(true){
 		Move move = move_orderer.next();
 		if(move == NullMove)break;

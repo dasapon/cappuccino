@@ -90,6 +90,7 @@ extern bool unit_test_perft();
 extern void uci_loop();
 
 enum{
+	ValueINF = 0xffff,
 	MateValue = 32000,
 	AlmostWin = 9999, 
 	PawnValue = 100,
