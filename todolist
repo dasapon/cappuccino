@@ -1,6 +1,10 @@
+Position::is_move_valid()
 transposition table
 static exchange evaluation
 parallel search
 time control
 ponder
 endgame knowledge(K + B + B vs K, K + B + N vs K)
+futility pruning
+late move reduction
+
