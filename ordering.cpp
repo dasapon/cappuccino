@@ -4,7 +4,8 @@ static float mvv_lva(Move m){
 	return (material_value[m.capture()] << 8) - material_value[m.piece()];
 }
 
-MoveOrderer::MoveOrderer(const Position& pos, Move hash_move, bool quiescence):idx(0), pos(pos), hash_move(hash_move){
+MoveOrderer::MoveOrderer(const Position& pos, Move hash_move, const KillerMove& killer, bool quiescence)
+	:idx(0), pos(pos), hash_move(hash_move), killer(killer){
 	if(!quiescence){
 		status = Hash;
 		if(hash_move != NullMove && pos.is_valid_move(hash_move)){
@@ -47,8 +48,12 @@ Move MoveOrderer::next(){
 		if(idx >= n_moves){
 			switch(status){
 			case Hash:
-				//generate moves
 				n_moves = pos.generate_important_moves(moves, n_moves);
+				//killer
+				if(!pos.check()){
+					if(pos.is_valid_move(killer[0]))moves[n_moves++] = killer[0];
+					if(pos.is_valid_move(killer[1]))moves[n_moves++] = killer[1];
+				}
 				for(int i=idx;i<n_moves;i++){
 					if(moves[i] == hash_move)moves[i--] = moves[--n_moves];
 					else scores[i] = mvv_lva(moves[i]);
@@ -59,7 +64,8 @@ Move MoveOrderer::next(){
 			case Important:
 				n_moves = pos.generate_unimportant_moves(moves, n_moves);
 				for(int i=idx;i<n_moves;i++){
-					if(moves[i] == hash_move)moves[i--] = moves[--n_moves];
+					Move m = moves[i];
+					if(m == hash_move || m == killer[0] || m == killer[1])moves[i--] = moves[--n_moves];
 				}
 				status = All;
 				if(n_moves > idx)break;

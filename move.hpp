@@ -46,6 +46,9 @@ public:
 	bool is_castling()const{
 		return piece() == King && std::abs(from() - to()) == 2;
 	}
+	bool is_important()const{
+		return capture() != Empty || is_promotion() || is_castling();
+	}
 	int32_t to_int()const{return move_;}
 	std::string to_fen()const{
 		if(is_promotion()){

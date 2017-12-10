@@ -10,8 +10,11 @@ int Searcher::think(State& state, int max_depth, PV& pv, bool print){
 	int ret = 0;
 	nodes = 0;
 	hash_table.new_gen();
+	killer[0].clear();
+	killer[1].clear();
 	for(int depth = 1; depth <= max_depth; depth++){
-		ret = search(state, -MateValue, MateValue, depth, 0, pv);
+		ret = search(state, -MateValue, MateValue, depth, 0);
+		pv = pv_table[0];
 		//print info
 		if(print){
 			std::cout << "info depth " << depth;
@@ -48,16 +51,15 @@ void Searcher::go(State& state){
 	});
 }
 
-int Searcher::search_w(State& state, int alpha, int beta, int depth, int ply, PV& pv_old){
-	if(depth > 0)return search(state, alpha, beta, depth, ply, pv_old);
-	else return qsearch(state, alpha, beta, depth, ply, pv_old);
+int Searcher::search_w(State& state, int alpha, int beta, int depth, int ply){
+	if(depth > 0)return search(state, alpha, beta, depth, ply);
+	else return qsearch(state, alpha, beta, depth, ply);
 }
-int Searcher::search(State& state, int alpha, int beta, int depth, int ply, PV& pv_old){
-	pv_old[ply] = NullMove;
+int Searcher::search(State& state, int alpha, int beta, int depth, int ply){
+	pv_table[ply][ply] = NullMove;
 	const int old_alpha = alpha;
 	const Position& pos = state.pos();
 	const bool check = pos.check();
-	PV pv;
 	int best_value = -MateValue;
 	Move hash_move = NullMove;
 	HashEntry hash_entry;
@@ -71,8 +73,9 @@ int Searcher::search(State& state, int alpha, int beta, int depth, int ply, PV& 
 		int hash_value;
 		if(hash_entry.hash_cut(hash_value, alpha, beta, depth))return hash_value;
 	}
+	killer[ply + 2].clear();
 	//generate moves
-	MoveOrderer move_orderer(pos, hash_move, false);
+	MoveOrderer move_orderer(pos, hash_move, killer[ply], false);
 	while(true){
 		Move move = move_orderer.next();
 		if(move == NullMove)break;
@@ -80,12 +83,12 @@ int Searcher::search(State& state, int alpha, int beta, int depth, int ply, PV& 
 		nodes++;
 		int v;
 		if(!legal_move_exist){
-			v = -search_w(state, -beta, -alpha, depth - 1, ply + 1, pv);
+			v = -search_w(state, -beta, -alpha, depth - 1, ply + 1);
 		}
 		else {
-			v = -search_w(state, -alpha-1, -alpha, depth - 1, ply + 1, pv);
+			v = -search_w(state, -alpha-1, -alpha, depth - 1, ply + 1);
 			if(alpha < v && v < beta){
-				v = -search_w(state, -beta, -alpha, depth - 1, ply + 1, pv);
+				v = -search_w(state, -beta, -alpha, depth - 1, ply + 1);
 			}
 		}
 		state.unmake_move();
@@ -94,25 +97,29 @@ int Searcher::search(State& state, int alpha, int beta, int depth, int ply, PV& 
 			best_value = v;
 			best_move = move;
 			//update pv
-			pv_old = pv;
-			pv_old[ply] = move;
+			pv_table[ply] = pv_table[ply + 1];
+			pv_table[ply][ply] = move;
 			//update alpha
 			alpha = std::max(v, alpha);
 			//beta cutoff
 			if(v >= beta)break;
 		}
 	}
+	if(best_value > old_alpha
+		&& !check
+		&& !best_move.is_important()){
+		killer[ply].update(best_move);
+	}
 	//stalemate
 	if(!legal_move_exist && !check)best_value = 0;
 	hash_table.store(pos, best_move, depth, best_value, old_alpha, beta);
 	return best_value;
 }
-int Searcher::qsearch(State& state, int alpha, int beta, int depth, int ply, PV& pv_old){
-	pv_old[ply] = NullMove;
+int Searcher::qsearch(State& state, int alpha, int beta, int depth, int ply){
+	pv_table[ply][ply] = NullMove;
 	//const int old_alpha = alpha;
 	const Position& pos = state.pos();
 	const bool check = pos.check();
-	PV pv;
 	int best_value = -MateValue;
 	Move best_move = NullMove;
 	//is draw?
@@ -125,20 +132,20 @@ int Searcher::qsearch(State& state, int alpha, int beta, int depth, int ply, PV&
 		if(stand_pat >= beta)return stand_pat;
 	}
 	//generate moves
-	MoveOrderer move_orderer(pos, NullMove, true);
+	MoveOrderer move_orderer(pos, NullMove, killer[ply], true);
 	while(true){
 		Move move = move_orderer.next();
 		if(move == NullMove)break;
 		state.make_move(move);
 		nodes++;
-		int v = -search_w(state, -beta, -alpha, depth - 1, ply + 1, pv);
+		int v = -search_w(state, -beta, -alpha, depth - 1, ply + 1);
 		state.unmake_move();
 		if(v > best_value){
 			best_value = v;
 			best_move = move;
 			//update pv
-			pv_old = pv;
-			pv_old[ply] = move;
+			pv_table[ply] = pv_table[ply + 1];
+			pv_table[ply][ply] = move;
 			//update alpha
 			alpha = std::max(v, alpha);
 			//beta cutoff
