@@ -234,7 +234,7 @@ Move Position::str2move(std::string move_str)const{
 }
 
 void Position::init_hash_seed(){
-	std::mt19937 mt(0);
+	std::mt19937_64 mt(0);
 	for(Piece p = Empty; p != PieceDim;p++){
 		for(Square sq = 0;sq < NSquare; sq++){
 			hash_seed[White][p][sq] = mt() & ~1ULL;
