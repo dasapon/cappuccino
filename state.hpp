@@ -47,7 +47,7 @@ public:
 				if(positions.size() < ply + 128){
 					positions.resize(ply + 200);
 				}
-				make_move(pos().str2move(cmds[i]));
+				make_move(Move(pos(), cmds[i]));
 			}
 		}
 	}

@@ -39,7 +39,6 @@ public:
 	void make_move(Move move);
 	void operator=(const Position& pos){memcpy(this,&pos,sizeof(Position));}
 	void load_fen(const FEN& fen);
-	Move str2move(std::string move_str)const;
 	Position(const Position& pos){(*this) = pos;}
 	Position(const FEN& fen){load_fen(fen);}
 	Position(){load_fen(startpos);}

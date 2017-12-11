@@ -45,7 +45,7 @@ bool unit_test_see(){
 	bool ok = true;
 	for(int i=0;i<2;i++){
 		Position pos(fens[i]);
-		int see = pos.see(pos.str2move(moves[i]));
+		int see = pos.see(Move(pos, moves[i]));
 		ok &= results[i] == see;
 		std::cout << results[i] << "," << see << std::endl;
 	}

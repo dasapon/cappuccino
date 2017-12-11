@@ -2,6 +2,8 @@
 
 #include "cappuccino.hpp"
 
+class Position;
+
 //Move
 //xxxx xxxx xxxx xxxx xxxx xxxx xx11 1111	to
 //xxxx xxxx xxxx xxxx xxxx 1111 11xx xxxx	from
@@ -14,14 +16,15 @@ public:
 	constexpr Move(const int i, int j):move_(i){}
 	Move(int i):move_(i){}
 	Move(){}
-	bool operator==(Move m)const{return move_ == m.move_;}
-	bool operator!=(Move m)const{return move_ != m.move_;}
 	Move(Piece piece, Piece capture, Square from, Square to){
 		move_ = (piece << 12) | (piece << 16) | (capture << 20) | (from << 6) | to;
 	}
 	Move(Piece piece, Piece promotion, Piece capture, Square from, Square to){
 		move_ = (piece << 12) | (promotion << 16) | (capture << 20) | (from << 6) | to;
 	}
+	Move(const Position& pos, std::string str);
+	bool operator==(Move m)const{return move_ == m.move_;}
+	bool operator!=(Move m)const{return move_ != m.move_;}
 	Square to()const{
 		return static_cast<Square>(move_ & 0x3f);
 	}
