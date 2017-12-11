@@ -36,6 +36,7 @@ public:
 	BitBoard empty_bb()const{return ~(occupied[White] | occupied[Black]);}
 	int generate_important_moves(Array<Move, MaxLegalMove>&, int)const;
 	int generate_unimportant_moves(Array<Move, MaxLegalMove>&, int)const;
+	int piece_list(Array<int, 32>&)const;
 	void make_move(Move move);
 	void operator=(const Position& pos){memcpy(this,&pos,sizeof(Position));}
 	void load_fen(const FEN& fen);

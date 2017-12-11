@@ -69,6 +69,9 @@ constexpr int NSquare = 64;
 
 inline int file(Square sq){return sq % 8;}
 inline int rank(Square sq){return sq / 8;}
+inline Square wb_reverse(Square sq){
+	return file(sq) + (7 - rank(sq)) * 8;
+}
 
 inline std::string square_string(Square sq){
 	assert(sq >= 0 && sq < 64);
@@ -103,3 +106,20 @@ enum{
 constexpr int depth_scale = 8;
 constexpr int eval_scale = 256;
 extern const Array<int, PieceDim> material_value;
+
+enum {
+	pawn_index = -8,
+	enemy_pawn_index = pawn_index + 64 - 16,
+	knight_index = enemy_pawn_index + 64 - 8,
+	enemy_knight_index = knight_index + 64,
+	bishop_index = enemy_knight_index + 64,
+	enemy_bishop_index = bishop_index + 64,
+	rook_index = enemy_bishop_index + 64,
+	enemy_rook_index = rook_index + 64,
+	queen_index = enemy_rook_index + 64,
+	enemy_queen_index = queen_index + 64,
+	king_index = enemy_queen_index + 64,
+	enemy_king_index = king_index + 64,
+	piece_index_dim = enemy_king_index + 64,
+};
+
