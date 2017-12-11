@@ -1,5 +1,6 @@
 #include "state.hpp"
 #include "search.hpp"
+#include "time.hpp"
 
 int Searcher::think(State& state, int max_depth, bool print){
 	PV pv;
@@ -9,6 +10,7 @@ int Searcher::think(State& state, int max_depth, bool print){
 int Searcher::think(State& state, int max_depth, PV& pv, bool print){
 	int ret = 0;
 	nodes = 0;
+	Timer timer;
 	hash_table.new_gen();
 	killer[0].clear();
 	killer[1].clear();
@@ -18,7 +20,7 @@ int Searcher::think(State& state, int max_depth, PV& pv, bool print){
 		//print info
 		if(print){
 			std::cout << "info depth " << depth;
-			std::cout << " time 0";
+			std::cout << " time " << timer.msec();
 			std::cout << " nodes " << nodes;
 			std::cout << " score cp " << ret;
 			if(pv[0] != NullMove){
