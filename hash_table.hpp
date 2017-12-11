@@ -23,7 +23,7 @@ public:
 	HashEntry(uint64_t key, Move move, int depth, int value, int alpha, int beta, uint64_t generation){
 		word1 = (key & key_mask)
 			| move.to_int();
-		word2 = (static_cast<uint64_t>(value + ValueINF) << 48) | (static_cast<uint64_t>(depth + 128) << 32)
+		word2 = (static_cast<uint64_t>(value + ValueINF) << 48) | (static_cast<uint64_t>(depth + 512) << 32)
 			| get_flag(alpha, beta, value) | generation;
 	}
 	bool hit(uint64_t key)const{return (key & key_mask) == (word1 & key_mask);}
@@ -31,7 +31,7 @@ public:
 		return Move(static_cast<int>(word1 & ~key_mask));
 	}
 	bool hash_cut(int& value, int alpha, int beta, int depth){
-		int d = static_cast<int>((word2 >> 32) & 0xffff) - 128;
+		int d = static_cast<int>((word2 >> 32) & 0xffff) - 512;
 		if(d >= depth){
 			int v = static_cast<int>(word2 >> 48) - ValueINF;
 			uint64_t flg = word2 & exact;

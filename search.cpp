@@ -13,7 +13,7 @@ int Searcher::think(State& state, int max_depth, PV& pv, bool print){
 	killer[0].clear();
 	killer[1].clear();
 	for(int depth = 1; depth <= max_depth; depth++){
-		ret = search(state, -MateValue, MateValue, depth, 0);
+		ret = search(state, -MateValue, MateValue, depth * depth_scale, 0);
 		pv = pv_table[0];
 		//print info
 		if(print){
@@ -87,12 +87,12 @@ int Searcher::search(State& state, int alpha, int beta, int depth, int ply){
 		nodes++;
 		int v;
 		if(!legal_move_exist){
-			v = -search_w(state, -beta, -alpha, depth - 1, ply + 1);
+			v = -search_w(state, -beta, -alpha, depth - depth_scale, ply + 1);
 		}
 		else {
-			v = -search_w(state, -alpha-1, -alpha, depth - 1, ply + 1);
+			v = -search_w(state, -alpha-1, -alpha, depth - depth_scale, ply + 1);
 			if(alpha < v && v < beta){
-				v = -search_w(state, -beta, -alpha, depth - 1, ply + 1);
+				v = -search_w(state, -beta, -alpha, depth - depth_scale, ply + 1);
 			}
 		}
 		state.unmake_move();
@@ -142,7 +142,7 @@ int Searcher::qsearch(State& state, int alpha, int beta, int depth, int ply){
 		if(move == NullMove)break;
 		state.make_move(move);
 		nodes++;
-		int v = -search_w(state, -beta, -alpha, depth - 1, ply + 1);
+		int v = -search_w(state, -beta, -alpha, depth - depth_scale, ply + 1);
 		state.unmake_move();
 		if(v > best_value){
 			best_value = v;

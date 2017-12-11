@@ -100,4 +100,6 @@ enum{
 	RookValue = 525,
 	QueenValue = 1000,
 };
+constexpr int depth_scale = 8;
+constexpr int eval_scale = 256;
 extern const Array<int, PieceDim> material_value;
