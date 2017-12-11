@@ -18,7 +18,9 @@ MoveOrderer::MoveOrderer(const Position& pos, Move hash_move, const KillerMove& 
 MoveOrderer::MoveOrderer(const Position& pos, Move hash_move):idx(0), pos(pos), hash_move(hash_move){
 	status = All;
 	n_moves = pos.generate_important_moves(moves, 0);
-	for(int i=0;i<n_moves;i++)scores[i] = mvv_lva(moves[i]);
+	for(int i=0;i<n_moves;i++){
+		scores[i] = mvv_lva(moves[i]);
+	}
 	insertion_sort(0, n_moves);
 }
 void MoveOrderer::insertion_sort(int start, int end){

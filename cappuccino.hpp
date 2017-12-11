@@ -87,6 +87,7 @@ using FEN = Array<std::string, 6>;
 class Position;
 extern uint64_t perft(Position&, int);
 extern bool unit_test_perft();
+extern bool unit_test_see();
 extern void uci_loop();
 
 enum{
@@ -94,9 +95,9 @@ enum{
 	MateValue = 32000,
 	AlmostWin = 9999, 
 	PawnValue = 100,
-	KnightValue = 300,
-	BishopValue = 300,
-	RookValue = 500,
-	QueenValue = 900,
+	KnightValue = 350,
+	BishopValue = 350,
+	RookValue = 525,
+	QueenValue = 1000,
 };
 extern const Array<int, PieceDim> material_value;

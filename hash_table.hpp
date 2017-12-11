@@ -43,6 +43,10 @@ public:
 				value = v;
 				return true;
 			}
+			else if(flg == exact){
+				value = v;
+				return true;
+			}
 		}
 		return false;
 	}

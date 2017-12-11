@@ -19,18 +19,32 @@ bool Position::is_attacked(Player p, Square sq)const{
 	return is_attacked(p, sq, all_bb, 0);
 }
 bool Position::is_attacked(Player p, Square sq, BitBoard customized_all, BitBoard ignored)const{
-	if(piece_attack<Knight>(sq, customized_all) & occupied[p] & pieces[Knight] & ~ignored)return true;
-	if(piece_attack<King>(sq, customized_all) & occupied[p] & pieces[King]& ~ignored)return true;
+	if(piece_attack<Knight>(sq, customized_all) & get_bb(p, Knight) & ~ignored)return true;
+	if(piece_attack<King>(sq, customized_all) & get_bb(p, King) & ~ignored)return true;
 	if(piece_attack<Rook>(sq, customized_all) & occupied[p] & (pieces[Rook] | pieces[Queen]) & ~ignored)return true;
 	if(piece_attack<Bishop>(sq, customized_all) & occupied[p] & (pieces[Bishop] | pieces[Queen]) & ~ignored)return true;
-	return (pawn_attack_table[opponent(p)][sq] & occupied[p] & pieces[Pawn] & ~ignored) != 0;
+	return (pawn_attack_table[opponent(p)][sq] & get_bb(p, Pawn) & ~ignored) != 0;
+}
+BitBoard Position::least_valuable_attacker(Player p, Square sq, BitBoard customized_all, BitBoard ignored)const{
+	BitBoard bb = pawn_attack_table[opponent(p)][sq] & get_bb(p, Pawn) & ~ ignored;
+	if(bb) return bb & -bb;
+	bb = piece_attack<Knight>(sq, customized_all) & get_bb(p, Knight) & ~ ignored;
+	if(bb) return bb & -bb;
+	bb = piece_attack<Bishop>(sq, customized_all) & get_bb(p, Bishop) & ~ ignored;
+	if(bb) return bb & -bb;
+	bb = piece_attack<Rook>(sq, customized_all) & get_bb(p, Rook) & ~ ignored;
+	if(bb) return bb & -bb;
+	bb = piece_attack<Queen>(sq, customized_all) & get_bb(p, Queen) & ~ ignored;
+	if(bb) return bb & -bb;
+	bb = piece_attack<King>(sq, customized_all) & get_bb(p, King) & ~ ignored;
+	return bb & -bb;
 }
 BitBoard Position::attackers(Player us, Square sq)const{
-	BitBoard ret = piece_attack<Knight>(sq, all_bb) & occupied[us] & pieces[Knight];
-	ret |= piece_attack<King>(sq, all_bb) & occupied[us] & pieces[King];
+	BitBoard ret = piece_attack<Knight>(sq, all_bb) & get_bb(us, Knight);
+	ret |= piece_attack<King>(sq, all_bb) & get_bb(us, King);
 	ret |= piece_attack<Rook>(sq, all_bb) & occupied[us] & (pieces[Rook] | pieces[Queen]);
 	ret |= piece_attack<Bishop>(sq, all_bb) & occupied[us] & (pieces[Bishop] | pieces[Queen]);
-	ret |= pawn_attack_table[opponent(us)][sq] & occupied[us] & pieces[Pawn];
+	ret |= pawn_attack_table[opponent(us)][sq] & get_bb(us, Pawn);
 	return ret;
 }
 
@@ -159,6 +173,31 @@ bool Position::is_valid_move(Move move)const{
 			: ((get_bb(opponent(turn), capture) & to_bb) != 0);
 		return capture_is_ok
 			&& (all_bb & sandwiched_squares[from][to]) == 0;
+	}
+}
+
+int Position::see_sub(Player p, Square sq, BitBoard all, BitBoard ignored, int hanged)const{
+	BitBoard bb = least_valuable_attacker(p, sq, all, ignored);
+	if(bb){
+		Square sq_ = bsf(bb);
+		return std::max(0, hanged - see_sub(p, sq, all & ~bb, ignored | bb, material_value[board[sq_]]));
+	}
+	else return 0;
+}
+
+int Position::see(Move move)const{
+	if(move.is_castling())return 0;
+	int hanged = material_value[move.piece_moved()];
+	int gain = hanged - material_value[move.piece()];
+	BitBoard from_bb = bb_sq(move.from());
+	Square to = move.to();
+	Piece cap = move.capture();
+	if(cap != Empty){
+		return -see_sub(opponent(turn), to, all_bb & ~from_bb, from_bb, hanged) + material_value[cap] + gain;
+	}
+	else{
+		BitBoard to_bb = bb_sq(to);
+		return -see_sub(opponent(turn), to, (all_bb & ~from_bb) | to_bb, from_bb, hanged) + gain;
 	}
 }
 

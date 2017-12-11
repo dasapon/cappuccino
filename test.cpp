@@ -35,3 +35,19 @@ bool unit_test_perft(){
 	}
 	return ok;
 }
+bool unit_test_see(){
+	Array<FEN, 2> fens({
+		FEN({"1k1r4/1pp4p/p7/4p3/8/P5P1/1PP4P/2K1R3", "w", "-", "-", "0", "1"}),
+		FEN({"1k1r3q/1ppn3p/p4b2/4p3/8/P2N2P1/1PP1R1BP/2K1Q3", "w", "-", "-", "0", "1"})
+		});
+	Array<std::string, 2> moves({"e1e5","d3e5"});
+	Array<int, 2> results({100, -250});
+	bool ok = true;
+	for(int i=0;i<2;i++){
+		Position pos(fens[i]);
+		int see = pos.see(pos.str2move(moves[i]));
+		ok &= results[i] == see;
+		std::cout << results[i] << "," << see << std::endl;
+	}
+	return ok;
+}

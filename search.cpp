@@ -47,7 +47,7 @@ void Searcher::go(State& state){
 	stop();
 	stop_recieved = false;
 	main_thread = std::thread([&](){
-		think(std::ref(state), 10, true);
+		think(std::ref(state), 9, true);
 	});
 }
 
@@ -71,7 +71,11 @@ int Searcher::search(State& state, int alpha, int beta, int depth, int ply){
 	if(hash_table.probe(pos, hash_entry)){
 		hash_move = hash_entry.move();
 		int hash_value;
-		if(hash_entry.hash_cut(hash_value, alpha, beta, depth))return hash_value;
+		if(ply > 0 && hash_entry.hash_cut(hash_value, alpha, beta, depth)){
+			pv_table[ply][ply] = hash_move;
+			pv_table[ply][ply + 1] = NullMove;
+			return hash_value;
+		}
 	}
 	killer[ply + 2].clear();
 	//generate moves
