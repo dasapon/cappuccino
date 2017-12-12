@@ -149,3 +149,73 @@ Move::Move(const Position& pos, std::string str){
 		if(str == moves[i].to_fen()) move_ = moves[i].move_;
 	}
 }
+
+static std::string to_pgn(int idx, const Position& pos, Array<Move, MaxLegalMove>& moves, int n_moves){
+	Move move = moves[idx];
+	Square to = move.to();
+	Square from = move.from();
+	Piece piece = move.piece();
+	std::string str("");
+	if(move.is_castling()){
+		if(to > from)return "O-O";
+		else str = "O-O-O";
+	}
+	else{
+		if(piece == Pawn){
+			if(move.capture() == Empty){
+				str = square_string(to);
+			}
+			else{
+				str += file_char(from);
+				str += "x";
+				str += square_string(to);
+			}
+			if(move.is_promotion()){
+				str += "=";
+				str += piece_char(White, move.piece_moved());
+			}
+		}
+		else{
+			str += piece_char(White, piece);
+			if(move.capture() != Empty)str += "x";
+			bool to_deperture = true;
+			bool file_deperture = true, rank_deperture = true;
+			for(int i=0;i<n_moves;i++){
+				if(i == idx)continue;
+				Move m = moves[i];
+				if(m.piece() == piece && m.to() == to){
+					to_deperture = false;
+					Square f = m.from();
+					file_deperture &= (file(from) != file(f));
+					rank_deperture &= (rank(from) != rank(f));
+				}
+			}
+			if(!to_deperture){
+				if(file_deperture)str += file_char(file(from));
+				else if(rank_deperture)str += rank_char(rank(from));
+				else str += square_string(from);
+			}
+			str += square_string(to);
+		}
+	}
+	if(pos.is_move_check(move)){
+		Position next(pos);
+		next.make_move(move);
+		Array<Move, MaxLegalMove> move_next;
+		if(next.generate_important_moves(move_next, 0) == 0)str += "#";
+		else str += "+";
+	}
+	return str;
+}
+
+Move pgn2move(const Position& pos, std::string str){
+	//move generation
+	Array<Move, MaxLegalMove> moves;
+	int n_moves = pos.generate_important_moves(moves, 0);
+	n_moves = pos.generate_unimportant_moves(moves, n_moves);
+	for(int i=0;i<n_moves;i++)if(pos.is_suicide_move(moves[i]))moves[i--] = moves[--n_moves];
+	for(int i=0;i<n_moves;i++){
+		if(str == to_pgn(i, pos, moves, n_moves))return moves[i];
+	}
+	return NullMove;
+}

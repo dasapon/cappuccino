@@ -63,3 +63,5 @@ public:
 	}
 };
 constexpr Move NullMove(0, 0);
+
+extern Move pgn2move(const Position& pos, std::string str);

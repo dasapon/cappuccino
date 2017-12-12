@@ -73,11 +73,18 @@ inline Square wb_reverse(Square sq){
 	return file(sq) + (7 - rank(sq)) * 8;
 }
 
+inline char file_char(Square sq){
+	return 'a' + file(sq);
+}
+inline char rank_char(Square sq){
+	return '1' + rank(sq);
+}
+
 inline std::string square_string(Square sq){
 	assert(sq >= 0 && sq < 64);
 	char c[3];
-	c[0] = 'a' + file(sq);
-	c[1] = '1' + rank(sq);
+	c[0] = file_char(sq);
+	c[1] = rank_char(sq);
 	c[2] = '\0';
 	return std::string(c);
 }
