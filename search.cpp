@@ -132,13 +132,25 @@ int Searcher::search(State& state, int alpha, int beta, int depth, int ply){
 }
 int Searcher::qsearch(State& state, int alpha, int beta, int depth, int ply){
 	pv_table[ply][ply] = NullMove;
-	//const int old_alpha = alpha;
+	const int old_alpha = alpha;
 	const Position& pos = state.pos();
 	const bool check = pos.check();
 	int best_value = -MateValue;
 	Move best_move = NullMove;
+	Move hash_move = NullMove;
+	HashEntry hash_entry;
 	//is draw?
 	if(state.draw())return 0;
+	//probe hash table
+	if(hash_table.probe(pos, hash_entry)){
+		hash_move = hash_entry.move();
+		int hash_value;
+		if(ply > 0 && hash_entry.hash_cut(hash_value, alpha, beta, depth)){
+			pv_table[ply][ply] = hash_move;
+			pv_table[ply][ply + 1] = NullMove;
+			return hash_value;
+		}
+	}
 	//stand pat
 	int stand_pat = evaluate(pos);
 	if(!check){
@@ -175,6 +187,7 @@ int Searcher::qsearch(State& state, int alpha, int beta, int depth, int ply){
 			if(v >= beta)break;
 		}
 	}
+	hash_table.store(pos, best_move, depth, best_value, old_alpha, beta);
 	return best_value;
 }
 
