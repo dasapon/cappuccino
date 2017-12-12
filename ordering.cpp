@@ -19,6 +19,7 @@ MoveOrderer::MoveOrderer(const Position& pos, Move hash_move):idx(0), pos(pos), 
 	status = All;
 	n_moves = pos.generate_important_moves(moves, 0);
 	for(int i=0;i<n_moves;i++){
+		if(pos.is_suicide_move(moves[i]))moves[i--] = moves[--n_moves];
 		scores[i] = mvv_lva(moves[i]);
 	}
 	insertion_sort(0, n_moves);
@@ -55,7 +56,7 @@ Move MoveOrderer::next(){
 					if(pos.is_valid_move(killer[1]))moves[n_moves++] = killer[1];
 				}
 				for(int i=idx;i<n_moves;i++){
-					if(moves[i] == hash_move)moves[i--] = moves[--n_moves];
+					if(moves[i] == hash_move || pos.is_suicide_move(moves[i]))moves[i--] = moves[--n_moves];
 					else scores[i] = mvv_lva(moves[i]);
 				}
 				insertion_sort(idx, n_moves);
@@ -66,17 +67,18 @@ Move MoveOrderer::next(){
 				for(int i=idx;i<n_moves;i++){
 					Move m = moves[i];
 					if(m == hash_move || m == killer[0] || m == killer[1]
-						|| (do_fp && !pos.is_move_check(moves[i])))moves[i--] = moves[--n_moves];
+						|| pos.is_suicide_move(moves[i]))moves[i--] = moves[--n_moves];
+					//futility pruning
+					//By pruning here, move scoring is omitted.
+					else if(do_fp && !pos.is_move_check(moves[i]))moves[i--] = moves[--n_moves];
+					else{
+					}
 				}
 				status = All;
 				if(n_moves > idx)break;
 			case All:
 				return NullMove;
 			}
-		}
-		if(pos.is_suicide_move(moves[idx])){
-			idx++;
-			continue;
 		}
 		return moves[idx++];
 	}
