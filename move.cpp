@@ -24,6 +24,56 @@ bool Position::is_suicide_move(Move move)const{
 	return is_attacked(opponent(turn), ksq, next_all, ignored);
 }
 
+bool Position::is_move_check(Move move)const{
+	Square to = move.to();
+	Square from = move.from();
+	BitBoard to_bb = bb_sq(to);
+	BitBoard from_bb = bb_sq(from);
+	BitBoard next_all = all_bb ^ from_bb;
+	const BitBoard bb_king = get_bb(opponent(turn), King);
+	//castling
+	if(move.is_castling()){
+		//check by rook ?
+		return (bb_king & piece_attack<Rook>((from + to) / 2, next_all)) != 0;
+	}
+	else{
+		//direct check?
+		switch(move.piece_moved()){
+		case Pawn:
+			if(pawn_attack_table[turn][to] & bb_king)return true;
+			if(to_bb == enpassant_bb){
+				next_all ^= bb_sq(turn == White? to - 8 : to + 8) ^ to_bb;
+			}
+			else if(move.capture() == Empty)next_all ^= to_bb;
+			break;
+		case Knight:
+			if(piece_attack<Knight>(to, next_all) & bb_king)return true;
+			if(move.capture() == Empty)next_all ^= to_bb;
+			break;
+		case Bishop:
+			if(piece_attack<Bishop>(to, next_all) & bb_king)return true;
+			if(move.capture() == Empty)next_all ^= to_bb;
+			break;
+		case Rook:
+			if(piece_attack<Rook>(to, next_all) & bb_king)return true;
+			if(move.capture() == Empty)next_all ^= to_bb;
+			break;
+		case Queen:
+			if(piece_attack<Queen>(to, next_all) & bb_king)return true;
+			if(move.capture() == Empty)next_all ^= to_bb;
+			break;
+		case King:
+			if(move.capture() == Empty)next_all ^= to_bb;
+			break;
+		case Empty:
+		case PieceDim:
+			assert(false);
+		}
+		//discovered check?
+		return is_attacked(turn, king_sq[opponent(turn)], next_all, from_bb);
+	}
+}
+
 bool Position::is_valid_move(Move move)const{
 	Piece piece = move.piece();
 	Piece capture = move.capture();
