@@ -37,6 +37,13 @@ int Position::evaluate(int rnd)const{
 			return AlmostWin + sweep_table[king_sq[enemy]];
 		}
 	}
+	int n = popcnt(all_bb);
+	if(n == 4 && more_than_one(pieces[Knight])){
+		//K + N + N vs K
+		//or
+		//K + N vs K + N
+		return 0;
+	}
 	//material value
 	int v = rnd;
 	for(Piece p = Pawn; p != King; p++){
