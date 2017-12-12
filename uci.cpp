@@ -2,7 +2,7 @@
 #include "state.hpp"
 #include "search.hpp"
 
-static std::vector<std::string> split(std::string str){
+std::vector<std::string> split(std::string str){
 	std::vector<std::string> ret;
 	std::istringstream iss(str);
 	std::string s;

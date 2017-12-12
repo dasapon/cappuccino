@@ -41,6 +41,7 @@ public:
 
 using BitBoard = uint64_t;
 using Square = int32_t;
+class Move;
 
 enum Player{
 	White,Black,PlayerDim,
@@ -130,3 +131,5 @@ enum {
 	piece_index_dim = enemy_king_index + 64,
 };
 
+extern std::vector<std::string> split(std::string str);
+extern std::vector<std::vector<Move>> read_pgn(std::string file_name);

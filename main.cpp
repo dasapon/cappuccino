@@ -10,6 +10,9 @@ int main(int argc, char* argv[]){
 		std::cout << "Unit test is " << (ok? "succeed" : "failed") << std::endl;
 		return 0;
 	}
+	else if(argc > 2 && std::string(argv[1]) == "probability"){
+		read_pgn(argv[2]);
+	}
 	uci_loop();
 	return 0;
 }

@@ -146,18 +146,22 @@ Move::Move(const Position& pos, std::string str){
 	int n = pos.generate_important_moves(moves, 0);
 	n = pos.generate_unimportant_moves(moves, n);
 	for(int i=0;i<n;i++){
-		if(str == moves[i].to_fen()) move_ = moves[i].move_;
+		if(str == moves[i].to_fen()){
+			move_ = moves[i].move_;
+			return;
+		}
 	}
+	std::cerr << "invalid move " << str << std::endl;
 }
 
 static std::string to_pgn(int idx, const Position& pos, Array<Move, MaxLegalMove>& moves, int n_moves){
 	Move move = moves[idx];
-	Square to = move.to();
-	Square from = move.from();
+	const Square to = move.to();
+	const Square from = move.from();
 	Piece piece = move.piece();
 	std::string str("");
 	if(move.is_castling()){
-		if(to > from)return "O-O";
+		if(to > from)str = "O-O";
 		else str = "O-O-O";
 	}
 	else{
@@ -177,7 +181,6 @@ static std::string to_pgn(int idx, const Position& pos, Array<Move, MaxLegalMove
 		}
 		else{
 			str += piece_char(White, piece);
-			if(move.capture() != Empty)str += "x";
 			bool to_deperture = true;
 			bool file_deperture = true, rank_deperture = true;
 			for(int i=0;i<n_moves;i++){
@@ -191,10 +194,11 @@ static std::string to_pgn(int idx, const Position& pos, Array<Move, MaxLegalMove
 				}
 			}
 			if(!to_deperture){
-				if(file_deperture)str += file_char(file(from));
-				else if(rank_deperture)str += rank_char(rank(from));
+				if(file_deperture)str += file_char(from);
+				else if(rank_deperture)str += rank_char(from);
 				else str += square_string(from);
 			}
+			if(move.capture() != Empty)str += "x";
 			str += square_string(to);
 		}
 	}
@@ -202,7 +206,14 @@ static std::string to_pgn(int idx, const Position& pos, Array<Move, MaxLegalMove
 		Position next(pos);
 		next.make_move(move);
 		Array<Move, MaxLegalMove> move_next;
-		if(next.generate_important_moves(move_next, 0) == 0)str += "#";
+		int n_next_moves = next.generate_important_moves(move_next, 0);
+		bool mate = true;
+		for(int i=0;i<n_next_moves;i++){
+			if(!next.is_suicide_move(move_next[i])){
+				mate = false;break;
+			}
+		}
+		if(mate)str += "#";
 		else str += "+";
 	}
 	return str;
@@ -215,7 +226,11 @@ Move pgn2move(const Position& pos, std::string str){
 	n_moves = pos.generate_unimportant_moves(moves, n_moves);
 	for(int i=0;i<n_moves;i++)if(pos.is_suicide_move(moves[i]))moves[i--] = moves[--n_moves];
 	for(int i=0;i<n_moves;i++){
-		if(str == to_pgn(i, pos, moves, n_moves))return moves[i];
+		std::string pgn = to_pgn(i, pos, moves, n_moves);
+		if(str == pgn){
+			return moves[i];
+		}
 	}
+	std::cerr << "invalid move " << str << std::endl;
 	return NullMove;
 }
