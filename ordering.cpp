@@ -4,8 +4,8 @@ static float mvv_lva(Move m){
 	return (material_value[m.capture()] << 8) - material_value[m.piece()];
 }
 
-MoveOrderer::MoveOrderer(const Position& pos, Move hash_move, const KillerMove& killer)
-	:idx(0), pos(pos), hash_move(hash_move), killer(killer){	
+MoveOrderer::MoveOrderer(const Position& pos, Move hash_move, const KillerMove& killer, bool do_fp)
+	:idx(0), pos(pos), hash_move(hash_move), killer(killer), do_fp(do_fp){	
 	status = Hash;
 	if(hash_move != NullMove && pos.is_valid_move(hash_move)){
 		moves[0] = hash_move;
@@ -65,7 +65,8 @@ Move MoveOrderer::next(){
 				n_moves = pos.generate_unimportant_moves(moves, n_moves);
 				for(int i=idx;i<n_moves;i++){
 					Move m = moves[i];
-					if(m == hash_move || m == killer[0] || m == killer[1])moves[i--] = moves[--n_moves];
+					if(m == hash_move || m == killer[0] || m == killer[1]
+						|| (do_fp && !pos.is_move_check(moves[i])))moves[i--] = moves[--n_moves];
 				}
 				status = All;
 				if(n_moves > idx)break;

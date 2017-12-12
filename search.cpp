@@ -6,7 +6,11 @@ int Searcher::think(State& state, int max_depth, bool print){
 	PV pv;
 	return think(state, max_depth, pv, print);
 }
-
+int futility_margin(int depth){
+	if(depth > 2 * depth_scale)return MateValue * 2;
+	else return KnightValue;
+}
+constexpr int delta_margin = KnightValue;
 int Searcher::think(State& state, int max_depth, PV& pv, bool print){
 	int ret = 0;
 	nodes = 0;
@@ -49,7 +53,7 @@ void Searcher::go(State& state){
 	stop();
 	stop_recieved = false;
 	main_thread = std::thread([&](){
-		think(std::ref(state), 9, true);
+		think(std::ref(state), 19, true);
 	});
 }
 
@@ -67,6 +71,7 @@ int Searcher::search(State& state, int alpha, int beta, int depth, int ply){
 	HashEntry hash_entry;
 	Move best_move = NullMove;
 	bool legal_move_exist = false;
+	bool is_pv = beta - alpha > 1;
 	//is draw?
 	if(state.draw() && ply > 0)return 0;
 	//probe hash table
@@ -80,8 +85,12 @@ int Searcher::search(State& state, int alpha, int beta, int depth, int ply){
 		}
 	}
 	killer[ply + 2].clear();
+	int stand_pat = evaluate(pos);
+	int fut_margin = futility_margin(depth);
+	const bool do_fp = !is_pv && !check && stand_pat + fut_margin < alpha;
+	if(do_fp)best_value = std::max(best_value, stand_pat + fut_margin);
 	//generate moves
-	MoveOrderer move_orderer(pos, hash_move, killer[ply]);
+	MoveOrderer move_orderer(pos, hash_move, killer[ply], do_fp);
 	while(true){
 		Move move = move_orderer.next();
 		if(move == NullMove)break;
@@ -142,6 +151,14 @@ int Searcher::qsearch(State& state, int alpha, int beta, int depth, int ply){
 	while(true){
 		Move move = move_orderer.next();
 		if(move == NullMove)break;
+		//pruning
+		if(!check && !pos.is_move_check(move)){
+			if(pos.see(move) < 0)continue;
+			if(stand_pat + delta_margin <= alpha){
+				best_value = std::max(stand_pat + delta_margin, best_value);
+				continue;
+			}
+		}
 		state.make_move(move);
 		nodes++;
 		int v = -search_w(state, -beta, -alpha, depth - depth_scale, ply + 1);

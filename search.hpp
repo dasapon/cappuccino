@@ -34,10 +34,11 @@ class MoveOrderer{
 	const Position& pos;
 	Move hash_move;
 	KillerMove killer;
+	bool do_fp;
 	void insertion_sort(int start, int end);
 	
 public:
-	MoveOrderer(const Position& pos, Move hash_move, const KillerMove& killer);
+	MoveOrderer(const Position& pos, Move hash_move, const KillerMove& killer, bool do_fp);
 	MoveOrderer(const Position& pos, Move hash_move);
 	Move next();
 };
