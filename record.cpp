@@ -18,7 +18,7 @@ static std::vector<std::string> read_block(std::ifstream& ifs){
 std::vector<std::vector<Move>> read_pgn(std::string file_name){
 	std::ifstream ifs(file_name);
 	int n_record = 0;
-	std::vector<std::vector<Move>> records;
+	std::vector<Record> records;
 	while(true){
 		std::vector<std::string> tags = read_block(ifs);
 		if(tags.size() == 0)break;
@@ -34,10 +34,10 @@ std::vector<std::vector<Move>> read_pgn(std::string file_name){
 				white_elo = std::stoi(tag);
 			}
 		}
-		if(black_elo <= 2500 || white_elo <= 2500)continue;
+		if(black_elo <= 3000 || white_elo <= 3000)continue;
 		//parse moves
 		Position pos;
-		std::vector<Move> record;
+		Record record;
 		for(const std::string& line : pgn_moves){
 			std::vector<std::string> v = split(line);
 			std::regex rgx("\\d+.");

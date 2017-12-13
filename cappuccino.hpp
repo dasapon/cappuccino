@@ -131,5 +131,6 @@ enum {
 	piece_index_dim = enemy_king_index + 64,
 };
 
+using Record = std::vector<Move>;
 extern std::vector<std::string> split(std::string str);
-extern std::vector<std::vector<Move>> read_pgn(std::string file_name);
+extern std::vector<Record> read_pgn(std::string file_name);
