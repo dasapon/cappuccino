@@ -188,30 +188,33 @@ bool Position::immediately_draw()const{
 	return n == 2 || (n == 3 && (pieces[Knight] | pieces[Bishop]) != 0);
 }
 
-static const Array<int, PieceDim> piece_index({
+static const Array<int, PieceDim> piece_index_table({
 	0, pawn_index, knight_index, bishop_index, 
 	rook_index, queen_index, king_index,
 });
 
-static const Array<int, PieceDim> enemy_piece_index({
+static const Array<int, PieceDim> enemy_piece_index_table({
 	0, enemy_pawn_index, enemy_knight_index, enemy_bishop_index, 
 	enemy_rook_index, enemy_queen_index, enemy_king_index,
 });
+
+template <bool is_enemy>
+extern int piece_index(Piece p, Square sq, Player side){
+	if(is_enemy)return enemy_piece_index_table[p] + (side == White? sq : wb_reverse(sq));
+	else return piece_index_table[p] + (side == White? sq : wb_reverse(sq));
+}
 int Position::piece_list(Array<int, 32>& list)const{
 	int ret = 0;
-	auto flip = [=](Square sq){
-		return turn == White? sq : wb_reverse(sq);
-	};
 	for(Piece p = Pawn;p < PieceDim;p++){
 		BitBoard bb = get_bb(turn, p);
 		while(bb){
 			Square sq = pop_one(bb);
-			list[ret++] = piece_index[p] + flip(sq);
+			list[ret++] = piece_index<false>(p, sq, turn);
 		}
 		bb = get_bb(opponent(turn), p);
 		while(bb){
 			Square sq = pop_one(bb);
-			list[ret++] = piece_index[p] + flip(sq);
+			list[ret++] = piece_index<true>(p, sq, turn);
 		}
 	}
 	return ret;

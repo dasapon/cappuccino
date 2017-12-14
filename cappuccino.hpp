@@ -133,6 +133,9 @@ enum {
 	piece_index_dim = enemy_king_index + 64,
 };
 
+template <bool is_enemy>
+extern int piece_index(Piece p, Square sq, Player side);
+
 using Record = std::vector<Move>;
 extern std::vector<std::string> split(std::string str);
 extern std::vector<Record> read_pgn(std::string file_name);
