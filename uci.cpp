@@ -64,5 +64,11 @@ void uci_loop(){
 		else if(cmds[0] == "key"){
 			std::cout << state.pos().key() << std::endl;
 		}
+		else if(cmds[0] == "piece_list"){
+			int n;
+			const Array<int, 32>& list = state.get_piece_list(&n);
+			for(int i=0;i<n;i++)std::cout << list[i] << " ";
+			std::cout << std::endl;
+		}
 	}
 }
