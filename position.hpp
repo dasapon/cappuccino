@@ -42,7 +42,7 @@ public:
 	void load_fen(const FEN& fen);
 	Position(const Position& pos){(*this) = pos;}
 	Position(const FEN& fen){load_fen(fen);}
-	Position(){load_fen(startpos);}
+	Position(){}
 	Player turn_player()const{return turn;}
 	bool check()const{return is_attacked(opponent(turn), king_sq[turn]);}
 	bool is_suicide_move(Move move) const;

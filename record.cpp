@@ -34,9 +34,9 @@ std::vector<std::vector<Move>> read_pgn(std::string file_name){
 				white_elo = std::stoi(tag);
 			}
 		}
-		if(black_elo <= 3000 || white_elo <= 3000)continue;
+		if(black_elo <= 3100 || white_elo <= 3100)continue;
 		//parse moves
-		Position pos;
+		Position pos(startpos);
 		Record record;
 		for(const std::string& line : pgn_moves){
 			std::vector<std::string> v = split(line);

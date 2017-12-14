@@ -1,9 +1,11 @@
 #include "position.hpp"
 #include "bitboard.hpp"
+#include "probability.hpp"
 
 int main(int argc, char* argv[]){
 	init_bitboard_tables();
 	Position::init_hash_seed();
+	load_proabiblity();
 	if(argc > 1 && std::string(argv[1]) == "test"){
 		bool ok = unit_test_perft();
 		ok &= unit_test_see();
@@ -11,7 +13,8 @@ int main(int argc, char* argv[]){
 		return 0;
 	}
 	else if(argc > 2 && std::string(argv[1]) == "probability"){
-		read_pgn(argv[2]);
+		std::vector<Record> records = read_pgn(argv[2]);
+		learn_probability(records);
 	}
 	uci_loop();
 	return 0;

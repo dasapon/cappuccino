@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cstdint>
+#include <climits>
+#include <cfloat>
 #include <iostream>
 #include <array>
 #include <string>
@@ -9,7 +11,6 @@
 #include <algorithm>
 #include <sstream>
 #include <initializer_list>
-#include <cstdint>
 #include <thread>
 
 template<typename Ty, size_t Size>
@@ -113,6 +114,7 @@ enum{
 };
 constexpr int depth_scale = 8;
 constexpr int eval_scale = 256;
+constexpr int learning_ply_limit = 512;
 extern const Array<int, PieceDim> material_value;
 
 enum {
