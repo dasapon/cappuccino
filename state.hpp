@@ -25,6 +25,10 @@ class State{
 	int ply;
 public:
 	const Position& pos()const{return history[ply].pos;}
+	const Array<int, 32>& get_piece_list(int* n)const{
+		*n = history[ply].n_pieces;
+		return history[ply].piece_list;
+	}
 	void unmake_move(){ply--;}
 	void make_move(Move move){
 		history[ply+1].set(pos(), move);

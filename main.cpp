@@ -15,6 +15,7 @@ int main(int argc, char* argv[]){
 	else if(argc > 2 && std::string(argv[1]) == "probability"){
 		std::vector<Record> records = read_pgn(argv[2]);
 		learn_probability(records);
+		return 0;
 	}
 	uci_loop();
 	return 0;

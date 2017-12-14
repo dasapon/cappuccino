@@ -199,10 +199,11 @@ static const Array<int, PieceDim> enemy_piece_index_table({
 });
 
 template <bool is_enemy>
-extern int piece_index(Piece p, Square sq, Player side){
+int piece_index(Piece p, Square sq, Player side){
 	if(is_enemy)return enemy_piece_index_table[p] + (side == White? sq : wb_reverse(sq));
 	else return piece_index_table[p] + (side == White? sq : wb_reverse(sq));
 }
+template int piece_index<false>(Piece p, Square sq, Player side);
 int Position::piece_list(Array<int, 32>& list)const{
 	int ret = 0;
 	for(Piece p = Pawn;p < PieceDim;p++){
