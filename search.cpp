@@ -30,7 +30,7 @@ int Searcher::think(State& state, int max_depth, PV& pv, bool print){
 			if(pv[0] != NullMove){
 				std::cout << " pv";
 				for(int i = 0;pv[i] != NullMove;i++){
-					std::cout << " " << pv[i].to_fen();
+					std::cout << " " << pv[i].to_lan();
 				}
 			}
 			std::cout << std::endl;
@@ -40,7 +40,7 @@ int Searcher::think(State& state, int max_depth, PV& pv, bool print){
 	//bestmove
 	if(print){
 		if(pv[0] != NullMove){
-			std::cout << "bestmove " << pv[0].to_fen() << std::endl;
+			std::cout << "bestmove " << pv[0].to_lan() << std::endl;
 		}
 		else{
 			std::cout << "bestmove resign"<<std::endl;

@@ -15,7 +15,7 @@ static std::vector<std::string> read_block(std::ifstream& ifs){
 	return ret;
 }
 
-std::vector<std::vector<Move>> read_pgn(std::string file_name){
+std::vector<std::vector<Move>> read_pgn(std::string file_name, int elo){
 	std::ifstream ifs(file_name);
 	int n_record = 0;
 	std::vector<Record> records;
@@ -34,7 +34,7 @@ std::vector<std::vector<Move>> read_pgn(std::string file_name){
 				white_elo = std::stoi(tag);
 			}
 		}
-		if(black_elo <= 3100 || white_elo <= 3100)continue;
+		if(black_elo <= elo || white_elo <= elo)continue;
 		//parse moves
 		Position pos(startpos);
 		Record record;
@@ -44,7 +44,7 @@ std::vector<std::vector<Move>> read_pgn(std::string file_name){
 			for(const std::string& str : v){
 				if(std::regex_match(str, rgx))continue;
 				else if(str == "1-0" || str == "1/2-1/2" || str == "0-1")break;
-				Move move = pgn2move(pos, str);
+				Move move = san2move(pos, str);
 				if(move == NullMove){
 					std::cout << str << std::endl;
 					return records;

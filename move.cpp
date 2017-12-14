@@ -146,7 +146,7 @@ Move::Move(const Position& pos, std::string str){
 	int n = pos.generate_important_moves(moves, 0);
 	n = pos.generate_unimportant_moves(moves, n);
 	for(int i=0;i<n;i++){
-		if(str == moves[i].to_fen()){
+		if(str == moves[i].to_lan()){
 			move_ = moves[i].move_;
 			return;
 		}
@@ -154,7 +154,7 @@ Move::Move(const Position& pos, std::string str){
 	std::cerr << "invalid move " << str << std::endl;
 }
 
-static std::string to_pgn(int idx, const Position& pos, Array<Move, MaxLegalMove>& moves, int n_moves){
+static std::string to_san(int idx, const Position& pos, Array<Move, MaxLegalMove>& moves, int n_moves){
 	Move move = moves[idx];
 	const Square to = move.to();
 	const Square from = move.from();
@@ -219,15 +219,15 @@ static std::string to_pgn(int idx, const Position& pos, Array<Move, MaxLegalMove
 	return str;
 }
 
-Move pgn2move(const Position& pos, std::string str){
+Move san2move(const Position& pos, std::string str){
 	//move generation
 	Array<Move, MaxLegalMove> moves;
 	int n_moves = pos.generate_important_moves(moves, 0);
 	n_moves = pos.generate_unimportant_moves(moves, n_moves);
 	for(int i=0;i<n_moves;i++)if(pos.is_suicide_move(moves[i]))moves[i--] = moves[--n_moves];
 	for(int i=0;i<n_moves;i++){
-		std::string pgn = to_pgn(i, pos, moves, n_moves);
-		if(str == pgn){
+		std::string san = to_san(i, pos, moves, n_moves);
+		if(str == san){
 			return moves[i];
 		}
 	}

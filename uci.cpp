@@ -54,7 +54,7 @@ void uci_loop(){
 			std::cout << n << " ";
 			for(int i=0;i<n;i++){
 				if(pos.is_suicide_move(moves[i]))continue;
-				std::cout << moves[i].to_fen() << " " << pos.is_move_check(moves[i]) << " ";
+				std::cout << moves[i].to_lan() << " " << pos.is_move_check(moves[i]) << " ";
 			}
 			std::cout << std::endl;
 		}

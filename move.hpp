@@ -53,7 +53,7 @@ public:
 		return capture() != Empty || is_promotion() || is_castling();
 	}
 	int32_t to_int()const{return move_;}
-	std::string to_fen()const{
+	std::string to_lan()const{
 		if(is_promotion()){
 			return square_string(from()) + square_string(to()) + piece_char(Black, piece_moved());
 		}
@@ -64,4 +64,4 @@ public:
 };
 constexpr Move NullMove(0, 0);
 
-extern Move pgn2move(const Position& pos, std::string str);
+extern Move san2move(const Position& pos, std::string str);
