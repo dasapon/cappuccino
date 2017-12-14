@@ -90,7 +90,7 @@ int Searcher::search(State& state, int alpha, int beta, int depth, int ply){
 	const bool do_fp = !is_pv && !check && stand_pat + fut_margin < alpha;
 	if(do_fp)best_value = std::max(best_value, stand_pat + fut_margin);
 	//generate moves
-	MoveOrderer move_orderer(pos, hash_move, killer[ply], do_fp);
+	MoveOrderer move_orderer(state, hash_move, killer[ply], do_fp);
 	while(true){
 		Move move = move_orderer.next();
 		if(move == NullMove)break;
@@ -159,7 +159,7 @@ int Searcher::qsearch(State& state, int alpha, int beta, int depth, int ply){
 		if(stand_pat >= beta)return stand_pat;
 	}
 	//generate moves
-	MoveOrderer move_orderer(pos, NullMove);
+	MoveOrderer move_orderer(state, NullMove);
 	while(true){
 		Move move = move_orderer.next();
 		if(move == NullMove)break;
