@@ -51,20 +51,16 @@ class Searcher{
 	bool stop_recieved;
 	uint64_t nodes;
 	HashTable hash_table;
-	//
-	Array<int, 0x4000> random_table;
 	int evaluate(const Position& pos){
-		return pos.evaluate(random_table[pos.key() & 0x3fff]);
+		return pos.evaluate();
 	}
 	PV pv_table[max_ply];
 	KillerMove killer[max_ply + 2];
 public:
-	void set_randomness(int sd);
 	~Searcher(){
 		if(main_thread.joinable())main_thread.join();
 	}
 	Searcher(){
-		set_randomness(10);
 	}
 	void stop(){
 		stop_recieved = true;

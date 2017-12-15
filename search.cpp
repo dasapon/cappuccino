@@ -191,11 +191,3 @@ int Searcher::qsearch(State& state, int alpha, int beta, int depth, int ply){
 	return best_value;
 }
 
-void Searcher::set_randomness(int sd){
-	std::mt19937 mt(0);
-	std::normal_distribution<double> dist(0, sd);
-	hash_table.clear();
-	for(int i=0;i<0x4000;i++){
-		random_table[i] = dist(mt);
-	}
-}
