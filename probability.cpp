@@ -1,16 +1,19 @@
+#include "simd.hpp"
 #include "probability.hpp"
 
+
 enum{
-	See,
 	SeeMinus,
 	Castling,
 	Check,
 	Capture,
-	To = Capture + King,
-	Dim = To + friend_piece_index_dim * piece_index_dim,
+	Promotion = Capture + King - Knight,
+	To = Promotion + Queen+ 1,
+	From = To + friend_piece_index_dim * piece_index_dim,
+	Dim = From + friend_piece_index_dim * piece_index_dim,
 };
 
-using Weights = Array<float, Dim>;
+using Weights = Array<Float4, Dim>;
 
 static Weights weights;
 
@@ -31,18 +34,18 @@ static void store(){
 }
 
 static void clear(Weights& w){
-	for(int i=0;i<Weights::size();i++)w[i] = 0;
+	for(int i=0;i<Weights::size();i++)w[i].clear();
 }
 
 template<bool update>
-static float get_weight(int idx, Weights& w, float d){
+static void proce(int idx, Weights& w, Float4& d){
 	if(update)w[idx] += d;
-	return w[idx];
+	else d += w[idx];
 }
 
 template<bool update>
 static float proce(const State& state, Move move, Weights& w, float d){
-	float ret = 0;
+	Float4 flt4 = 0;
 	const Position& pos = state.pos();
 	int n_pieces;
 	const Array<int, 32>& piece_list = state.get_piece_list(&n_pieces);
@@ -52,17 +55,26 @@ static float proce(const State& state, Move move, Weights& w, float d){
 	Piece capture = move.capture();
 	const Player turn = pos.turn_player();
 	Square to = move.to();
-	if(update)w[See] += d * see / 256;
-	else ret += w[See] * see / 256;
-	if(see < 0)ret += get_weight<update>(SeeMinus, w, d);
-	if(move.is_castling())ret += get_weight<update>(Castling, w, d);
-	if(check)ret += get_weight<update>(Check, w, d);
-	ret += get_weight<update>(Capture + capture, w, d);
-	const int piece_index_to = piece_index<false>(piece, to, turn) * piece_index_dim;
+	Square from = move.from();
+	Float4 coefficients(1.0f, see / 256.0f, 0, 0);
+	if(update)flt4 = coefficients * d;
+	//basic move features
+	if(see < 0)proce<update>(SeeMinus, w, flt4);
+	if(move.is_castling())proce<update>(Castling, w, flt4);
+	if(check)proce<update>(Check, w, flt4);
+	proce<update>(Capture + capture, w, flt4);
+	if(move.is_promotion())proce<update>(Promotion + move.piece_moved(), w, flt4);
+	//relation of to and piece_list
+	const int piece_index_to = piece_index<false>(move.piece_moved(), to, turn) * piece_index_dim;
 	for(int i=0;i<n_pieces;i++){
-		ret += get_weight<update>(To + piece_index_to + piece_list[i], w, d);
+		proce<update>(To + piece_index_to + piece_list[i], w, flt4);
 	}
-	return ret;
+	const int piece_index_from = piece_index<false>(piece, from, turn) * piece_index_dim;
+	for(int i=0;i<n_pieces;i++){
+		proce<update>(From + piece_index_from + piece_list[i], w, flt4);
+	}
+	flt4 *= coefficients;
+	return flt4.sum();
 }
 
 float move_score(const State& state, Move move){
@@ -137,9 +149,9 @@ void learn_probability(std::vector<Record>& records){
 	constexpr int batch_size = 2000;
 	constexpr float learning_rate = 0.1f;
 	constexpr float delta = 0.000001f;
-	Weights grad, g2;
-	clear(grad);
-	clear(g2);
+	std::unique_ptr<Weights> grad(new Weights), g2(new Weights);
+	clear(*grad);
+	clear(*g2);
 	for(int epoch = 0;epoch < 4;epoch++){
 		double accuracy = 0;
 		int cnt = 0;
@@ -151,15 +163,16 @@ void learn_probability(std::vector<Record>& records){
 			for(int ply = 0;ply < sample.second;ply++){
 				state.make_move(record[ply]);
 			}
-			accuracy += learn_one<false>(state, record[sample.second], grad);
+			accuracy += learn_one<false>(state, record[sample.second], *grad);
 			cnt++;
 			if((i + 1) % batch_size == 0){
 				//update weights
 				for(int i=0;i<Weights::size();i++){
-					g2[i] += grad[i] * grad[i];
-					weights[i] -= grad[i] * learning_rate / (std::sqrt(g2[i]) + delta);
+					Float4 g = (*grad)[i];
+					(*g2)[i] += g * g;
+					weights[i] -= g * learning_rate / ((*g2)[i].sqrt() + delta);
 				}
-				clear(grad);
+				clear(*grad);
 			}
 		}
 		std::cout << accuracy / cnt << std::endl;
@@ -171,7 +184,7 @@ void learn_probability(std::vector<Record>& records){
 		const Record& record = records[i];
 		State state;
 		for(int j=0;j<records[i].size();j++){
-			accuracy += learn_one<true>(state, record[j], grad);
+			accuracy += learn_one<true>(state, record[j], *grad);
 			cnt++;
 			state.make_move(record[j]);
 		}
