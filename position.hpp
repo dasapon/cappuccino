@@ -26,12 +26,12 @@ class Position{
 	int generate_piece_moves(Array<Move, MaxLegalMove>&, int idx, const BitBoard target)const;
 	template<Player turn>
 	int generate_pawn_moves(Array<Move, MaxLegalMove>&, int idx, BitBoard target)const;
-	bool is_attacked(Player p, Square sq)const;
 	bool is_attacked(Player p, Square sq, BitBoard customized_all, BitBoard ignored)const;
 	BitBoard least_valuable_attacker(Player p, Square sq, BitBoard customized_all, BitBoard ignored)const;
 	BitBoard attackers(Player turn, Square sq)const;
 	int see_sub(Player side, Square sq, BitBoard all, BitBoard ignored, int hanged)const;
 public:
+	bool is_attacked(Player p, Square sq)const;
 	static void init_hash_seed();
 	BitBoard empty_bb()const{return ~(occupied[White] | occupied[Black]);}
 	int generate_important_moves(Array<Move, MaxLegalMove>&, int)const;

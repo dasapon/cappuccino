@@ -54,7 +54,7 @@ std::vector<std::vector<Move>> read_pgn(std::string file_name, int elo){
 			}
 		}
 		records.push_back(record);
-		if(++n_record%5000==0)std::cout << n_record<<std::endl;
+		if(++n_record%10000==0)std::cout << n_record<<std::endl;
 	}
 	ifs.close();
 	return records;

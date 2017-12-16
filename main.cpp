@@ -13,7 +13,7 @@ int main(int argc, char* argv[]){
 		return 0;
 	}
 	else if(argc > 2 && std::string(argv[1]) == "probability"){
-		std::vector<Record> records = read_pgn(argv[2], 3050);
+		std::vector<Record> records = read_pgn(argv[2], 2800);
 		learn_probability(records);
 		return 0;
 	}

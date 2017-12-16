@@ -6,9 +6,11 @@ enum{
 	SeeMinus,
 	Castling,
 	Check,
+	ReCapture,
 	Capture,
 	Promotion = Capture + King - Knight,
-	To = Promotion + Queen+ 1,
+	Escape = Promotion + King - 2 * Pawn,
+	To = Escape + 2 * PieceDim,
 	From = To + friend_piece_index_dim * piece_index_dim,
 	Dim = From + friend_piece_index_dim * piece_index_dim,
 };
@@ -56,13 +58,16 @@ static float proce(const State& state, Move move, Weights& w, float d){
 	const Player turn = pos.turn_player();
 	Square to = move.to();
 	Square from = move.from();
-	Float4 coefficients(1.0f, see / 256.0f, 0, 0);
+	const float progress = (n_pieces - 2.0f) / 30.0f;
+	Float4 coefficients(1.0f, see / 256.0f, 2 * progress - 1.0, capture != Empty? 1 : 0);
 	if(update)flt4 = coefficients * d;
 	//basic move features
 	if(see < 0)proce<update>(SeeMinus, w, flt4);
 	if(move.is_castling())proce<update>(Castling, w, flt4);
 	if(check)proce<update>(Check, w, flt4);
+	if(state.last_move().to() == to)proce<update>(ReCapture, w, flt4);
 	proce<update>(Capture + capture, w, flt4);
+	if(pos.is_attacked(opponent(turn), from))proce<update>(Escape + 2 * piece + (pos.is_attacked(turn, from)? 1 : 0), w, flt4);
 	if(move.is_promotion())proce<update>(Promotion + move.piece_moved(), w, flt4);
 	//relation of to and piece_list
 	const int piece_index_to = piece_index<false>(move.piece_moved(), to, turn) * piece_index_dim;
