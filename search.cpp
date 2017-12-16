@@ -1,6 +1,5 @@
 #include "state.hpp"
 #include "search.hpp"
-#include "time.hpp"
 
 int Searcher::think(State& state, int max_depth, bool print){
 	PV pv;
@@ -18,6 +17,7 @@ int Searcher::think(State& state, int max_depth, PV& pv, bool print){
 	hash_table.new_gen();
 	killer[0].clear();
 	killer[1].clear();
+	pv_table[0][0] = NullMove;
 	for(int depth = 1; depth <= max_depth; depth++){
 		ret = search(state, -MateValue, MateValue, depth * depth_scale, 0);
 		pv = pv_table[0];
@@ -26,7 +26,7 @@ int Searcher::think(State& state, int max_depth, PV& pv, bool print){
 			std::cout << "info depth " << depth;
 			std::cout << " time " << timer.msec();
 			std::cout << " nodes " << nodes;
-			std::cout << " score cp " << ret;
+			if(ret > INT_MIN)std::cout << " score cp " << ret;
 			if(pv[0] != NullMove){
 				std::cout << " pv";
 				for(int i = 0;pv[i] != NullMove;i++){
@@ -35,7 +35,7 @@ int Searcher::think(State& state, int max_depth, PV& pv, bool print){
 			}
 			std::cout << std::endl;
 		}
-		if(std::abs(ret) >= MateValue || stop_recieved)break;
+		if(std::abs(ret) >= MateValue || abort)break;
 	}
 	//bestmove
 	if(print){
@@ -49,11 +49,12 @@ int Searcher::think(State& state, int max_depth, PV& pv, bool print){
 	return ret;
 }
 
-void Searcher::go(State& state){
+void Searcher::go(State& state, uint64_t time, uint64_t inc, bool ponder_or_infinite){
 	stop();
-	stop_recieved = false;
+	abort = false;
+	timer_start(time, inc, ponder_or_infinite);
 	main_thread = std::thread([&](){
-		think(std::ref(state), 19, true);
+		think(std::ref(state), 15, true);
 	});
 }
 
@@ -62,23 +63,24 @@ int Searcher::search_w(State& state, int alpha, int beta, int depth, int ply){
 	else return qsearch(state, alpha, beta, depth, ply);
 }
 int Searcher::search(State& state, int alpha, int beta, int depth, int ply){
-	pv_table[ply][ply] = NullMove;
 	const int old_alpha = alpha;
 	const Position& pos = state.pos();
 	const bool check = pos.check();
-	int best_value = -MateValue;
+	int best_value = INT_MIN;
 	Move hash_move = NullMove;
 	HashEntry hash_entry;
 	Move best_move = NullMove;
 	bool legal_move_exist = false;
 	bool is_pv = beta - alpha > 1;
+	if(ply == 0)hash_move = pv_table[ply][ply];
+	else pv_table[ply][ply] = NullMove;
 	//is draw?
 	if(state.draw() && ply > 0)return 0;
 	//probe hash table
-	if(hash_table.probe(pos, hash_entry)){
+	if(ply > 0 && hash_table.probe(pos, hash_entry)){
 		hash_move = hash_entry.move();
 		int hash_value;
-		if(ply > 0 && hash_entry.hash_cut(hash_value, alpha, beta, depth)){
+		if(hash_entry.hash_cut(hash_value, alpha, beta, depth)){
 			pv_table[ply][ply] = hash_move;
 			pv_table[ply][ply + 1] = NullMove;
 			return hash_value;
@@ -107,6 +109,7 @@ int Searcher::search(State& state, int alpha, int beta, int depth, int ply){
 			}
 		}
 		state.unmake_move();
+		if(abort)return best_value;
 		legal_move_exist = true;
 		if(v > best_value){
 			best_value = v;
@@ -127,6 +130,8 @@ int Searcher::search(State& state, int alpha, int beta, int depth, int ply){
 	}
 	//stalemate
 	if(!legal_move_exist && !check)best_value = 0;
+	//checkmate
+	else best_value = std::max(best_value, -MateValue);
 	hash_table.store(pos, best_move, depth, best_value, old_alpha, beta);
 	return best_value;
 }
@@ -191,3 +196,17 @@ int Searcher::qsearch(State& state, int alpha, int beta, int depth, int ply){
 	return best_value;
 }
 
+void Searcher::timer_start(uint64_t t, uint64_t i, bool ponder_or_infinite){
+	inf = ponder_or_infinite;
+	uint64_t opt = t / 24;
+	Timer timer;
+	search_start = timer;
+	std::cout << "info string " << t << "," << i << "," << opt << std::endl;
+	timer_thread = std::thread([&](uint64_t time, uint64_t inc, uint64_t optimum){
+		while(true){
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+			if(!inf && search_start.msec() > optimum)break;
+		}
+		abort = true;
+	}, t, i, opt);
+}

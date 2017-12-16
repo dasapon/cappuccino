@@ -38,7 +38,19 @@ void uci_loop(){
 			state.set_up(cmds);
 		}
 		else if(cmds[0] == "go"){
-			searcher.go(state);
+			Array<uint64_t, PlayerDim> time({0,0}), inc({0,0});
+			bool ponder_or_infinite = false;
+			for(int i=1;i<cmds.size();i++){
+				if(cmds[i] == "ponder" || cmds[i] == "infinite"){
+					ponder_or_infinite = true;
+				}
+				else if(cmds[i] == "wtime")time[White] = std::stoi(cmds[i+1]);
+				else if(cmds[i] == "btime")time[Black] = std::stoi(cmds[i+1]);
+				else if(cmds[i] == "winc")inc[White] = std::stoi(cmds[i+1]);
+				else if(cmds[i] == "binc")inc[Black] = std::stoi(cmds[i+1]);
+			}
+			Player turn = state.pos().turn_player();
+			searcher.go(state, time[turn], inc[turn], ponder_or_infinite);
 		}
 		else if(cmds[0] == "stop"){
 			searcher.stop();

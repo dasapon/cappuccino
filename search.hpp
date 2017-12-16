@@ -3,6 +3,7 @@
 #include "position.hpp"
 #include "state.hpp"
 #include "hash_table.hpp"
+#include "time.hpp"
 
 constexpr int max_ply = 128;
 
@@ -47,8 +48,7 @@ class Searcher{
 	int search(State& state, int alpha, int beta, int depth, int ply);
 	int qsearch(State& state, int alpha, int beta, int depth, int ply);
 	int search_w(State& state, int alpha, int beta, int depth, int ply);
-	std::thread main_thread;
-	bool stop_recieved;
+	std::thread main_thread, timer_thread;
 	uint64_t nodes;
 	HashTable hash_table;
 	int evaluate(const Position& pos){
@@ -60,13 +60,24 @@ public:
 	~Searcher(){
 		if(main_thread.joinable())main_thread.join();
 	}
-	Searcher(){
-	}
-	void stop(){
-		stop_recieved = true;
-		if(main_thread.joinable())main_thread.join();
-	}
-	void go(State& state);
+	Searcher(){}
+	void go(State& state, uint64_t time, uint64_t inc, bool ponder_or_infinite);
 	int think(State& state, int max_depth, PV& pv, bool print);
 	int think(State& state, int max_depth, bool print);
+	//time control
+private:
+	volatile bool abort;
+	volatile bool inf;
+	Timer search_start;
+	void timer_start(uint64_t, uint64_t, bool);
+public:
+	void ponder_hit(){
+		inf = false;
+	}
+	void stop(){
+		inf = false;
+		abort = true;
+		if(main_thread.joinable())main_thread.join();
+		if(timer_thread.joinable())timer_thread.join();
+	}
 };

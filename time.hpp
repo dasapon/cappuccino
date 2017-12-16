@@ -6,5 +6,6 @@ class Timer{
 public:
 	Timer(){start = system_clock::now();}
 	uint64_t msec()const{return duration_cast<milliseconds>(system_clock::now() - start).count();}
+	void operator=(Timer& timer){start = timer.start;}
 };
 
