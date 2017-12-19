@@ -63,7 +63,7 @@ void Searcher::go(State& state, uint64_t time, uint64_t inc, bool ponder_or_infi
 
 int Searcher::search_w(State& state, int alpha, int beta, int depth, int ply){
 	if(depth > 0)return search(state, alpha, beta, depth, ply);
-	else return qsearch(state, alpha, beta, depth, ply);
+	else return qsearch(state, alpha, beta, 0, ply);
 }
 int Searcher::search(State& state, int alpha, int beta, int depth, int ply){
 	const int old_alpha = alpha;
@@ -158,7 +158,7 @@ int Searcher::search(State& state, int alpha, int beta, int depth, int ply){
 		killer[ply].update(best_move);
 	}
 	//stalemate
-	if(move_count == 0 && !check)best_value = 0;
+	if(move_count == 0 && !check && !do_fp)best_value = 0;
 	//checkmate
 	else best_value = std::max(best_value, -MateValue);
 	hash_table.store(pos, best_move, depth, best_value, old_alpha, beta);
@@ -201,8 +201,11 @@ int Searcher::qsearch(State& state, int alpha, int beta, int depth, int ply){
 		//pruning
 		if(!check && !pos.is_move_check(move)){
 			if(pos.see(move) < 0)continue;
-			if(stand_pat + delta_margin <= alpha){
-				best_value = std::max(stand_pat + delta_margin, best_value);
+			//delta pruning
+			int max_gain = delta_margin + material_value[move.capture()];
+			if(move.is_promotion())max_gain += material_value[move.piece_moved()] - PawnValue; 
+			if(stand_pat + max_gain <= alpha){
+				best_value = std::max(stand_pat + max_gain, best_value);
 				continue;
 			}
 		}
