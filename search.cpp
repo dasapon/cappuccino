@@ -5,16 +5,7 @@ static int futility_margin(int depth){
 	if(depth > 2 * depth_scale)return MateValue * 2;
 	else return KnightValue;
 }
-static constexpr int delta_margin = KnightValue;
-
-static int consume_depth(float score, int depth, int move_count){
-	if(depth < RPSDepth)return depth_scale;
-	//realization probability search
-	int ret = -std::log2(score) * depth_scale;
-	ret = std::min(ret, depth - 2 * depth_scale);
-	if(move_count == 1)ret = std::min(ret, depth_scale);
-	return ret;
-}
+static constexpr int delta_margin = PawnValue * 3;
 
 int Searcher::think(State& state, int max_depth, bool print){
 	PV pv;
@@ -104,7 +95,8 @@ int Searcher::search(State& state, int alpha, int beta, int depth, int ply){
 	if(do_fp)best_value = std::max(best_value, stand_pat + fut_margin);
 	//generate moves
 	int move_count = 0;
-	MoveOrdering move_ordering(state, hash_move, killer[ply], depth >= RPSDepth, do_fp);
+	const bool rps = depth >= RPSDepth;
+	MoveOrdering move_ordering(state, hash_move, killer[ply], rps, do_fp);
 	while(true){
 		float score;
 		Move move = move_ordering.next(&score);
@@ -112,7 +104,26 @@ int Searcher::search(State& state, int alpha, int beta, int depth, int ply){
 		state.make_move(move);
 		nodes++;
 		move_count++;
-		int consume = consume_depth(score, depth, move_count);
+		int consume = depth_scale;
+		if(rps){
+			//realization probability search
+			consume = -std::log2(score) * depth_scale;
+			consume = std::min(consume, depth - 2 * depth_scale);
+			if(move_count == 1)consume = std::min(consume, depth_scale);
+		}
+		else{
+			//check extention
+			if(pos.is_move_check(move))consume = depth_scale / 2;
+			else if(depth >= 2 * depth_scale
+					&& !check
+					&& move_count > 8
+					&& !move.is_important()
+					&& move != killer[ply][0]
+					&& move != killer[ply][1]){
+				//late move reduction
+				consume += 2 * depth_scale;
+			}
+		}
 		int v;
 		if(move_count == 1){
 			v = -search_w(state, -beta, -alpha, depth - depth_scale, ply + 1);
