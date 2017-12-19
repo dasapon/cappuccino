@@ -2,5 +2,4 @@ parallel search
 ponder
 endgame knowledge(K + B + B vs K, K + B + N vs K)
 late move reduction
-realization probability based alpha-beta
 piece pair evaluation function

@@ -100,6 +100,7 @@ void calculate_probability(int n,const Array<Move, MaxLegalMove>& moves, Array<f
 		scores[i] /= sum;
 	}
 }
+
 using Sample = std::pair<int, int>;
 template <bool test>
 double learn_one(const State& state, Move best_move, Weights& grad){
@@ -131,7 +132,7 @@ double learn_one(const State& state, Move best_move, Weights& grad){
 			other_max_score = std::max(other_max_score, scores[i]);
 		}
 	}
-	return best_move_score > other_max_score ? 1: 0;
+	return -std::log(best_move_score);
 }
 
 void learn_probability(std::vector<Record>& records){
@@ -158,7 +159,7 @@ void learn_probability(std::vector<Record>& records){
 	clear(*grad);
 	clear(*g2);
 	for(int epoch = 0;epoch < 4;epoch++){
-		double accuracy = 0;
+		double loss = 0;
 		int cnt = 0;
 		std::shuffle(training_set.begin(), training_set.end(), mt);
 		for(int i=0;i + batch_size <= training_set.size();i++){
@@ -168,7 +169,7 @@ void learn_probability(std::vector<Record>& records){
 			for(int ply = 0;ply < sample.second;ply++){
 				state.make_move(record[ply]);
 			}
-			accuracy += learn_one<false>(state, record[sample.second], *grad);
+			loss += learn_one<false>(state, record[sample.second], *grad);
 			cnt++;
 			if((i + 1) % batch_size == 0){
 				//update weights
@@ -180,20 +181,20 @@ void learn_probability(std::vector<Record>& records){
 				clear(*grad);
 			}
 		}
-		std::cout << accuracy / cnt << std::endl;
+		std::cout << loss / cnt << std::endl;
 	}
 	//test
-	double accuracy = 0;
+	double loss = 0;
 	int cnt = 0;
 	for(int i=0;i<1000;i++){
 		const Record& record = records[i];
 		State state;
 		for(int j=0;j<records[i].size();j++){
-			accuracy += learn_one<true>(state, record[j], *grad);
+			loss += learn_one<true>(state, record[j], *grad);
 			cnt++;
 			state.make_move(record[j]);
 		}
 	}
-	std::cout << "test:" << accuracy / cnt << std::endl;
+	std::cout << "test:" << loss / cnt << std::endl;
 	store();
 }

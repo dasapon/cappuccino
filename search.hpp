@@ -8,6 +8,10 @@
 constexpr int max_ply = 128;
 
 using PV = Array<Move, max_ply>;
+
+enum {
+	RPSDepth = 4 * depth_scale,
+};
 class KillerMove : public Array<Move, 2>{
 	public:
 	void update(Move m){
@@ -21,7 +25,7 @@ class KillerMove : public Array<Move, 2>{
 	}
 };
 
-class MoveOrderer{
+class MoveOrdering{
 	enum Status{
 		Hash,
 		Important,
@@ -39,9 +43,9 @@ class MoveOrderer{
 	void insertion_sort(int start, int end);
 	
 public:
-	MoveOrderer(const State& state, Move hash_move, const KillerMove& killer, bool do_fp);
-	MoveOrderer(const State& state, Move hash_move);
-	Move next();
+	MoveOrdering(const State& state, Move hash_move, const KillerMove& killer, bool rps, bool do_fp);
+	MoveOrdering(const State& state, Move hash_move);
+	Move next(float* score);
 };
 
 class Searcher{

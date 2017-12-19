@@ -1,15 +1,26 @@
 #include "state.hpp"
 #include "search.hpp"
 
+static int futility_margin(int depth){
+	if(depth > 2 * depth_scale)return MateValue * 2;
+	else return KnightValue;
+}
+static constexpr int delta_margin = KnightValue;
+
+static int consume_depth(float score, int depth, int move_count){
+	if(depth < RPSDepth)return depth_scale;
+	//realization probability search
+	int ret = -std::log2(score) * depth_scale;
+	ret = std::min(ret, depth - 2 * depth_scale);
+	if(move_count == 1)ret = std::min(ret, depth_scale);
+	return ret;
+}
+
 int Searcher::think(State& state, int max_depth, bool print){
 	PV pv;
 	return think(state, max_depth, pv, print);
 }
-int futility_margin(int depth){
-	if(depth > 2 * depth_scale)return MateValue * 2;
-	else return KnightValue;
-}
-constexpr int delta_margin = KnightValue;
+
 int Searcher::think(State& state, int max_depth, PV& pv, bool print){
 	int ret = 0;
 	nodes = 0;
@@ -19,14 +30,15 @@ int Searcher::think(State& state, int max_depth, PV& pv, bool print){
 	killer[1].clear();
 	pv_table[0][0] = NullMove;
 	for(int depth = 1; depth <= max_depth; depth++){
-		ret = search(state, -MateValue, MateValue, depth * depth_scale, 0);
+		int v = search(state, -MateValue, MateValue, depth * depth_scale, 0);
+		if(v > INT_MIN)ret = v;
 		pv = pv_table[0];
 		//print info
 		if(print){
 			std::cout << "info depth " << depth;
 			std::cout << " time " << timer.msec();
 			std::cout << " nodes " << nodes;
-			if(ret > INT_MIN)std::cout << " score cp " << ret;
+			std::cout << " score cp " << ret;
 			if(pv[0] != NullMove){
 				std::cout << " pv";
 				for(int i = 0;pv[i] != NullMove;i++){
@@ -54,7 +66,7 @@ void Searcher::go(State& state, uint64_t time, uint64_t inc, bool ponder_or_infi
 	abort = false;
 	timer_start(time, inc, ponder_or_infinite);
 	main_thread = std::thread([&](){
-		think(std::ref(state), 15, true);
+		think(std::ref(state), 25, true);
 	});
 }
 
@@ -70,7 +82,6 @@ int Searcher::search(State& state, int alpha, int beta, int depth, int ply){
 	Move hash_move = NullMove;
 	HashEntry hash_entry;
 	Move best_move = NullMove;
-	bool legal_move_exist = false;
 	bool is_pv = beta - alpha > 1;
 	if(ply == 0)hash_move = pv_table[ply][ply];
 	else pv_table[ply][ply] = NullMove;
@@ -92,25 +103,32 @@ int Searcher::search(State& state, int alpha, int beta, int depth, int ply){
 	const bool do_fp = !is_pv && !check && stand_pat + fut_margin < alpha;
 	if(do_fp)best_value = std::max(best_value, stand_pat + fut_margin);
 	//generate moves
-	MoveOrderer move_orderer(state, hash_move, killer[ply], do_fp);
+	int move_count = 0;
+	MoveOrdering move_ordering(state, hash_move, killer[ply], depth >= RPSDepth, do_fp);
 	while(true){
-		Move move = move_orderer.next();
+		float score;
+		Move move = move_ordering.next(&score);
 		if(move == NullMove)break;
 		state.make_move(move);
 		nodes++;
+		move_count++;
+		int consume = consume_depth(score, depth, move_count);
 		int v;
-		if(!legal_move_exist){
+		if(move_count == 1){
 			v = -search_w(state, -beta, -alpha, depth - depth_scale, ply + 1);
 		}
 		else {
-			v = -search_w(state, -alpha-1, -alpha, depth - depth_scale, ply + 1);
+			v = -search_w(state, -alpha-1, -alpha, depth - consume, ply + 1);
+			if(consume > depth_scale && v > alpha){
+				consume = depth_scale;
+				v = -search_w(state, -alpha-1, -alpha, depth - consume, ply + 1);
+			}
 			if(alpha < v && v < beta){
-				v = -search_w(state, -beta, -alpha, depth - depth_scale, ply + 1);
+				v = -search_w(state, -beta, -alpha, depth - consume, ply + 1);
 			}
 		}
 		state.unmake_move();
 		if(abort)return best_value;
-		legal_move_exist = true;
 		if(v > best_value){
 			best_value = v;
 			best_move = move;
@@ -129,7 +147,7 @@ int Searcher::search(State& state, int alpha, int beta, int depth, int ply){
 		killer[ply].update(best_move);
 	}
 	//stalemate
-	if(!legal_move_exist && !check)best_value = 0;
+	if(move_count == 0 && !check)best_value = 0;
 	//checkmate
 	else best_value = std::max(best_value, -MateValue);
 	hash_table.store(pos, best_move, depth, best_value, old_alpha, beta);
@@ -164,9 +182,10 @@ int Searcher::qsearch(State& state, int alpha, int beta, int depth, int ply){
 		if(stand_pat >= beta)return stand_pat;
 	}
 	//generate moves
-	MoveOrderer move_orderer(state, NullMove);
+	MoveOrdering move_ordering(state, NullMove);
 	while(true){
-		Move move = move_orderer.next();
+		float score;
+		Move move = move_ordering.next(&score);
 		if(move == NullMove)break;
 		//pruning
 		if(!check && !pos.is_move_check(move)){

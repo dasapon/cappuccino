@@ -5,18 +5,46 @@ static float mvv_lva(Move m){
 	return (material_value[m.capture()] << 8) - material_value[m.piece()];
 }
 
-MoveOrderer::MoveOrderer(const State& state, Move hash_move, const KillerMove& killer, bool do_fp)
-	:idx(0), state(state), hash_move(hash_move), killer(killer), do_fp(do_fp){	
-	status = Hash;
-	if(hash_move != NullMove && state.pos().is_valid_move(hash_move)){
-		moves[0] = hash_move;
-		n_moves = 1;
+MoveOrdering::MoveOrdering(const State& state, Move hash_move, const KillerMove& killer, bool rps, bool do_fp)
+	:idx(0), state(state), hash_move(hash_move), killer(killer), do_fp(do_fp){
+	if(rps){
+		status = All;
+		const Position& pos = state.pos();
+		n_moves = pos.generate_important_moves(moves, 0);
+		n_moves = pos.generate_unimportant_moves(moves, n_moves);
+		float max_score = -FLT_MAX;
+		int hash_move_idx = -1;
+		for(int i=0;i<n_moves;i++){
+			if(pos.is_suicide_move(moves[i])){
+				moves[i--] = moves[--n_moves];
+				continue;
+			}
+			if(moves[i] == hash_move)hash_move_idx = i;
+			scores[i] = move_score(state, moves[i]);
+			max_score = std::max(scores[i], max_score);
+		}
+		calculate_probability(n_moves, moves, scores, max_score);
+		//todo futility pruning
+		if(hash_move_idx >= 0){
+			float score = scores[hash_move_idx];
+			scores[hash_move_idx] = FLT_MAX;
+			insertion_sort(0, n_moves);
+			scores[0] = score;
+		}
+		else insertion_sort(0, n_moves);
 	}
 	else{
-		n_moves = 0;
+		status = Hash;
+		if(hash_move != NullMove && state.pos().is_valid_move(hash_move)){
+			moves[0] = hash_move;
+			n_moves = 1;
+		}
+		else{
+			n_moves = 0;
+		}
 	}
 }
-MoveOrderer::MoveOrderer(const State& state, Move hash_move):idx(0), state(state), hash_move(hash_move){
+MoveOrdering::MoveOrdering(const State& state, Move hash_move):idx(0), state(state), hash_move(hash_move){
 	status = All;
 	const Position& pos = state.pos();
 	n_moves = pos.generate_important_moves(moves, 0);
@@ -26,7 +54,7 @@ MoveOrderer::MoveOrderer(const State& state, Move hash_move):idx(0), state(state
 	}
 	insertion_sort(0, n_moves);
 }
-void MoveOrderer::insertion_sort(int start, int end){
+void MoveOrdering::insertion_sort(int start, int end){
 	int i, j;
 	float s;
 	Move m;
@@ -46,7 +74,7 @@ void MoveOrderer::insertion_sort(int start, int end){
 	}
 }
 
-Move MoveOrderer::next(){
+Move MoveOrdering::next(float* score){
 	while(true){
 		if(idx >= n_moves){
 			const Position& pos = state.pos();
@@ -85,6 +113,7 @@ Move MoveOrderer::next(){
 				return NullMove;
 			}
 		}
+		*score = scores[idx];
 		return moves[idx++];
 	}
 }
