@@ -1,18 +1,19 @@
 #include "simd.hpp"
 #include "probability.hpp"
-
+#include "time.hpp"
 
 enum{
 	SeeMinus,
 	Castling,
 	Check,
-	ReCapture,
 	Capture,
 	Promotion = Capture + King - Knight,
 	Escape = Promotion + King - 2 * Pawn,
 	To = Escape + 2 * PieceDim,
 	From = To + friend_piece_index_dim * piece_index_dim,
-	Dim = From + friend_piece_index_dim * piece_index_dim,
+	PreviousTo = From + friend_piece_index_dim * piece_index_dim,
+	PreviousFrom = PreviousTo + friend_piece_index_dim * piece_index_dim,
+	Dim = PreviousFrom + friend_piece_index_dim * piece_index_dim,
 };
 
 using Weights = Array<Float4, Dim>;
@@ -65,18 +66,31 @@ static float proce(const State& state, Move move, Weights& w, float d){
 	if(see < 0)proce<update>(SeeMinus, w, flt4);
 	if(move.is_castling())proce<update>(Castling, w, flt4);
 	if(check)proce<update>(Check, w, flt4);
-	if(state.last_move().to() == to)proce<update>(ReCapture, w, flt4);
 	proce<update>(Capture + capture, w, flt4);
 	if(pos.is_attacked(opponent(turn), from))proce<update>(Escape + 2 * piece + (pos.is_attacked(turn, from)? 1 : 0), w, flt4);
 	if(move.is_promotion())proce<update>(Promotion + move.piece_moved(), w, flt4);
-	//relation of to and piece_list
+	//to and piece_list
 	const int piece_index_to = piece_index<false>(move.piece_moved(), to, turn) * piece_index_dim;
 	for(int i=0;i<n_pieces;i++){
 		proce<update>(To + piece_index_to + piece_list[i], w, flt4);
 	}
+	//from and piece_list
 	const int piece_index_from = piece_index<false>(piece, from, turn) * piece_index_dim;
 	for(int i=0;i<n_pieces;i++){
 		proce<update>(From + piece_index_from + piece_list[i], w, flt4);
+	}
+	//previous move
+	Move last_move = state.previous_move(0);
+	Move second_last_move = state.previous_move(1);
+	if(last_move != NullMove){
+		const int piece_index_last = piece_index<true>(last_move.piece_moved(), last_move.to(), turn);
+		proce<update>(PreviousTo + piece_index_to + piece_index_last, w, flt4);
+		proce<update>(PreviousFrom + piece_index_from + piece_index_last, w, flt4);
+	}
+	if(second_last_move != NullMove){
+		const int piece_index_second_last = piece_index<false>(second_last_move.piece_moved(), second_last_move.to(), turn);
+		proce<update>(PreviousTo + piece_index_to + piece_index_second_last, w, flt4);
+		proce<update>(PreviousFrom + piece_index_from + piece_index_second_last, w, flt4);
 	}
 	flt4 *= coefficients;
 	return flt4.sum();
@@ -152,9 +166,10 @@ void learn_probability(std::vector<Record>& records){
 	}
 	//training
 	clear(weights);
-	constexpr int batch_size = 2000;
+	constexpr int batch_size = 10000;
 	constexpr float learning_rate = 0.1f;
 	constexpr float delta = 0.000001f;
+	Timer timer;
 	std::unique_ptr<Weights> grad(new Weights), g2(new Weights);
 	clear(*grad);
 	clear(*g2);
@@ -181,7 +196,7 @@ void learn_probability(std::vector<Record>& records){
 				clear(*grad);
 			}
 		}
-		std::cout << loss / cnt << std::endl;
+		std::cout << loss / cnt <<", "<< timer.msec() << std::endl;
 	}
 	//test
 	double loss = 0;

@@ -29,7 +29,10 @@ public:
 		*n = history[ply].n_pieces;
 		return history[ply].piece_list;
 	}
-	Move last_move()const{return history[ply].last_move;}
+	Move previous_move(int i)const{
+		if(ply < i)return NullMove;
+		return history[ply - i].last_move;
+	}
 	void unmake_move(){ply--;}
 	void make_move(Move move){
 		history[ply+1].set(pos(), move);
