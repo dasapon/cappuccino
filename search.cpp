@@ -1,5 +1,6 @@
 #include "state.hpp"
 #include "search.hpp"
+#include "evaluate.hpp"
 
 static int futility_margin(int depth){
 	if(depth > 2 * depth_scale)return MateValue * 2;
@@ -81,15 +82,17 @@ int Searcher::search(State& state, int alpha, int beta, int depth, int ply){
 	//probe hash table
 	if(ply > 0 && hash_table.probe(pos, hash_entry)){
 		hash_move = hash_entry.move();
+#ifndef LEARN
 		int hash_value;
 		if(hash_entry.hash_cut(hash_value, alpha, beta, depth)){
 			pv_table[ply][ply] = hash_move;
 			pv_table[ply][ply + 1] = NullMove;
 			return hash_value;
 		}
+#endif
 	}
 	killer[ply + 2].clear();
-	int stand_pat = evaluate(pos);
+	int stand_pat = evaluate(state);
 	int fut_margin = futility_margin(depth);
 	const bool do_fp = !is_pv && !check && stand_pat + fut_margin < alpha;
 	if(do_fp)best_value = std::max(best_value, stand_pat + fut_margin);
@@ -178,15 +181,17 @@ int Searcher::qsearch(State& state, int alpha, int beta, int depth, int ply){
 	//probe hash table
 	if(hash_table.probe(pos, hash_entry)){
 		hash_move = hash_entry.move();
+#ifndef LEARN
 		int hash_value;
 		if(ply > 0 && hash_entry.hash_cut(hash_value, alpha, beta, depth)){
 			pv_table[ply][ply] = hash_move;
 			pv_table[ply][ply + 1] = NullMove;
 			return hash_value;
 		}
+#endif
 	}
 	//stand pat
-	int stand_pat = evaluate(pos);
+	int stand_pat = evaluate(state);
 	if(!check){
 		best_value = stand_pat;
 		alpha = std::max(alpha, stand_pat);

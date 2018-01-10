@@ -1,6 +1,7 @@
 #include "simd.hpp"
 #include "probability.hpp"
 #include "time.hpp"
+#include "learn.hpp"
 
 enum{
 	SeeMinus,
@@ -30,14 +31,6 @@ void load_proabiblity(){
 	if(fail){
 		std::cout << "probabiblity loading is failed." << std::endl;
 	}
-}
-static void store(){
-	FILE * fp = fopen("probability.bin", "wb");
-	fwrite(&weights, sizeof(Weights), 1, fp);
-}
-
-static void clear(Weights& w){
-	for(int i=0;i<Weights::size();i++)w[i].clear();
 }
 
 template<bool update>
@@ -115,7 +108,17 @@ void calculate_probability(int n,const Array<Move, MaxLegalMove>& moves, Array<f
 	}
 }
 
-using Sample = std::pair<int, int>;
+#ifdef LEARN
+
+static void store(){
+	FILE * fp = fopen("probability.bin", "wb");
+	fwrite(&weights, sizeof(Weights), 1, fp);
+}
+
+static void clear(Weights& w){
+	for(int i=0;i<Weights::size();i++)w[i].clear();
+}
+
 template <bool test>
 double learn_one(const State& state, Move best_move, Weights& grad){
 	Array<Move, MaxLegalMove> moves;
@@ -155,15 +158,8 @@ void learn_probability(std::vector<Record>& records){
 		return;
 	}
 	std::cout << "learning probability ..." << std::endl;
-	std::cout << "Dim = " << Dim << std::endl;
-	std::vector<Sample> training_set;
+	std::vector<Sample> training_set = get_training_set(records, 1000);
 	std::mt19937 mt(0);
-	std::shuffle(records.begin(), records.end(), mt);
-	for(int i=1000;i<records.size();i++){
-		for(int j=0;j<records[i].size() && j < learning_ply_limit;j++){
-			training_set.push_back(Sample(i, j));
-		}
-	}
 	//training
 	clear(weights);
 	constexpr int batch_size = 10000;
@@ -180,11 +176,8 @@ void learn_probability(std::vector<Record>& records){
 		for(int i=0;i + batch_size <= training_set.size();i++){
 			Sample sample = training_set[i];
 			State state;
-			const Record& record = records[sample.first];
-			for(int ply = 0;ply < sample.second;ply++){
-				state.make_move(record[ply]);
-			}
-			loss += learn_one<false>(state, record[sample.second], *grad);
+			setup_leaning_position(state, records, sample);
+			loss += learn_one<false>(state, records[sample.first][sample.second], *grad);
 			cnt++;
 			if((i + 1) % batch_size == 0){
 				//update weights
@@ -196,7 +189,7 @@ void learn_probability(std::vector<Record>& records){
 				clear(*grad);
 			}
 		}
-		std::cout << loss / cnt <<", "<< timer.msec() << std::endl;
+		std::cout << loss / cnt <<", "<< timer.sec() << std::endl;
 	}
 	//test
 	double loss = 0;
@@ -213,3 +206,4 @@ void learn_probability(std::vector<Record>& records){
 	std::cout << "test:" << loss / cnt << std::endl;
 	store();
 }
+#endif

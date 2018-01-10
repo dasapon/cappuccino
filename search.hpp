@@ -55,9 +55,6 @@ class Searcher{
 	std::thread main_thread, timer_thread;
 	uint64_t nodes;
 	HashTable hash_table;
-	int evaluate(const Position& pos){
-		return pos.evaluate();
-	}
 	PV pv_table[max_ply];
 	KillerMove killer[max_ply + 2];
 public:

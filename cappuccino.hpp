@@ -12,6 +12,7 @@
 #include <sstream>
 #include <initializer_list>
 #include <thread>
+#include <random>
 
 template<typename Ty, size_t Size>
 class Array{
@@ -113,7 +114,6 @@ enum{
 	QueenValue = 1000,
 };
 constexpr int depth_scale = 8;
-constexpr int eval_scale = 256;
 constexpr int learning_ply_limit = 512;
 extern const Array<int, PieceDim> material_value;
 

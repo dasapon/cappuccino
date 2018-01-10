@@ -49,7 +49,7 @@ public:
 	bool is_move_check(Move move) const;
 	bool is_valid_move(Move move) const;
 	int see(Move move) const;
-	int evaluate()const;
+	int endgame_eval()const;
 	bool immediately_draw()const;
 	uint64_t key()const{
 		uint64_t ret = hash_key;

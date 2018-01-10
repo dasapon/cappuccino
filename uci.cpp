@@ -1,6 +1,6 @@
-#include "position.hpp"
 #include "state.hpp"
 #include "search.hpp"
+#include "evaluate.hpp"
 
 std::vector<std::string> split(std::string str){
 	std::vector<std::string> ret;
@@ -71,7 +71,7 @@ void uci_loop(){
 			std::cout << std::endl;
 		}
 		else if(cmds[0] == "eval"){
-			std::cout << state.pos().evaluate() << std::endl;
+			std::cout << evaluate(state) << std::endl;
 		}
 		else if(cmds[0] == "key"){
 			std::cout << state.pos().key() << std::endl;

@@ -20,10 +20,20 @@ class State{
 			last_move = move;
 			n_pieces = this->pos.piece_list(piece_list);
 		}
+		void operator=(const CurState& cs){
+			pos = cs.pos;
+			piece_list = cs.piece_list;
+			last_move = cs.last_move;
+			n_pieces = cs.n_pieces;
+		}
 	};
 	std::vector<CurState> history;
 	int ply;
 public:
+	void operator=(const State& state){
+		ply = state.ply;
+		for(int i=0;i<ply;i++)history[i] = state.history[i];
+	}
 	const Position& pos()const{return history[ply].pos;}
 	const Array<int, 32>& get_piece_list(int* n)const{
 		*n = history[ply].n_pieces;
@@ -38,9 +48,10 @@ public:
 		history[ply+1].set(pos(), move);
 		ply++;
 	}
+	void unmake_all_move(){ply = 0;}
 	void init(const FEN& fen){
 		ply = 0;
-		if(history.size() < learning_ply_limit)history.resize(ply + learning_ply_limit);
+		if(history.size() < 2048)history.resize(2048);
 		history[0] = Position(fen);
 	}
 	bool draw()const{
@@ -68,11 +79,9 @@ public:
 		init(fen);
 		if(cmds.size() > i && cmds[i++]=="moves"){
 			for(;i<cmds.size();i++){
-				if(history.size() < learning_ply_limit + ply){
-					history.resize(ply + learning_ply_limit * 2);
-				}
 				make_move(Move(pos(), cmds[i]));
 			}
 		}
 	}
+	int game_ply()const{return ply;}
 };

@@ -73,6 +73,9 @@ public:
 		set_size(32);
 		clear();
 	}
+	~HashTable(){
+		if(table != nullptr)delete[] table;
+	}
 	bool probe(const Position& pos, HashEntry& entry)const{
 		uint64_t key = pos.key();
 		entry = table[key & mask];
