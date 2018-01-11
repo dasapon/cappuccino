@@ -26,7 +26,7 @@ const Array<int, PieceDim> material_value({
 	MateValue,
 });
 
-static Array<int, piece_index_dim> weights;
+static Array<Array<int, piece_index_dim>, piece_index_dim> weights;
 
 int evaluate(const State& state){
 	const Position& pos = state.pos();
@@ -37,7 +37,10 @@ int evaluate(const State& state){
 	const Array<int, 32>& list = state.get_piece_list(&n_pieces);
 	int v = 0;
 	for(int i=0;i<n_pieces;i++){
-		v += weights[list[i]];
+		const int p1 =list[i];
+		for(int j=i;j<n_pieces;j++){
+			v += weights[p1][list[j]];
+		}
 	}
 	return v / eval_scale;
 }
@@ -77,7 +80,7 @@ void load_eval(){
 	FILE * fp = fopen("eval.bin", "rb");
 	bool fail = true;
 	if(fp != NULL){
-		fail = fread(&weights, sizeof(Array<int, piece_index_dim>), 1, fp) != 1;
+		fail = fread(&weights, sizeof(Array<Array<int, piece_index_dim>, piece_index_dim>), 1, fp) != 1;
 		fclose(fp);
 	}
 	if(fail){
@@ -88,7 +91,7 @@ void load_eval(){
 
 #ifdef LEARN
 
-static void eval_feature(State& state, const PV& pv, std::vector<int>& grad, int d){
+static void eval_feature(State& state, const PV& pv, std::vector<Array<int, piece_index_dim>>& grad, int d){
 	int ply = 0;
 	for(;pv[ply] != NullMove;ply++){
 		state.make_move(pv[ply]);
@@ -101,8 +104,13 @@ static void eval_feature(State& state, const PV& pv, std::vector<int>& grad, int
 		d = pos.turn_player() == White? d : -d;
 		int n_pieces;
 		const Array<int, 32>& list = state.get_piece_list(&n_pieces);
-		for(int i=0;i < n_pieces;i++){
-			grad[list[i]] += d;
+		for(int i=0;i<n_pieces;i++){
+			const int p1 =list[i];
+			for(int j=i;j<n_pieces;j++){
+				const int p2 = list[j];
+				grad[p1][p2] += d;
+				grad[p2][p1] += d;
+			}
 		}
 	}while(false);
 	for(int i=0;i<ply;i++){
@@ -110,7 +118,7 @@ static void eval_feature(State& state, const PV& pv, std::vector<int>& grad, int
 	}
 }
 
-static bool learn_one(Searcher& searcher, State& state, Move bestmove, std::mt19937& mt, bool* mated){
+static bool learn_one(Searcher& searcher, State& state, Move bestmove, std::mt19937& mt, bool* mated, std::vector<Array<int, piece_index_dim>>& grad){
 	PV good_pv, bad_pv;
 	//search subtree of bestmove
 	state.make_move(bestmove);
@@ -120,7 +128,6 @@ static bool learn_one(Searcher& searcher, State& state, Move bestmove, std::mt19
 		*mated = true;
 		return true;
 	}
-	std::vector<int> grad(piece_index_dim, 0);
 	//search subtree of badmoves
 	//move generation
 	Array<Move, MaxLegalMove> moves;
@@ -135,7 +142,7 @@ static bool learn_one(Searcher& searcher, State& state, Move bestmove, std::mt19
 	}
 	int selected = 0;
 	int cnt = 0;
-	const int grad_scale = state.pos().turn_player() == White? eval_scale : -eval_scale;
+	const int grad_scale = (state.pos().turn_player() == White? eval_scale : -eval_scale) / 8;
 	for(int i=0;i<n_moves;i++){
 		if(mt() % (n_moves - i) >= 16 - selected)continue;
 		selected++;
@@ -152,8 +159,11 @@ static bool learn_one(Searcher& searcher, State& state, Move bestmove, std::mt19
 		eval_feature(state, good_pv, grad, grad_scale * cnt);
 		state.unmake_move();
 		//update params
-		for(int i=0;i<weights.size();i++){
-			weights[i] += grad[i] / cnt;
+		for(int i=0;i<piece_index_dim;i++){
+			for(int j=0;j<piece_index_dim;j++){
+				weights[i][j] += grad[i][j] / cnt;
+				grad[i][j] = 0;
+			}
 		}
 	}
 	return cnt == 0;
@@ -161,11 +171,18 @@ static bool learn_one(Searcher& searcher, State& state, Move bestmove, std::mt19
 
 void learn_eval(std::vector<Record>& records){
 	//init evaluation table
+	for(int i=0;i<piece_index_dim;i++){
+		for(int j=0;j<piece_index_dim;j++){
+			weights[i][j] = 0;
+		}
+	}
 	for(Piece p = Pawn; p != PieceDim; p++){
 		for(Square sq = 0; sq < NSquare; sq++){
 			if(p == Pawn && (sq < 8 || sq >=56))continue;
-			weights[piece_index<false>(p, sq, White)] = material_value[p] * eval_scale;
-			weights[piece_index<true>(p, sq, White)] = -material_value[p] * eval_scale;
+			int id = piece_index<false>(p, sq, White);
+			int id_rev = piece_index<true>(p, sq, White);
+			weights[id][id] = material_value[p] * eval_scale;
+			weights[id_rev][id_rev] = -material_value[p] * eval_scale;
 		}
 	}
 	if(records.size() < 10000){
@@ -176,7 +193,13 @@ void learn_eval(std::vector<Record>& records){
 	std::vector<Sample> training_set = get_training_set(records, 0);
 	std::mt19937 mt(0);
 	//training
-	std::vector<int64_t> weights_sum(piece_index_dim, 0);
+	std::vector<Array<int64_t, piece_index_dim>> weights_sum(piece_index_dim);
+	std::vector<Array<int, piece_index_dim>> grad(piece_index_dim);
+	for(int i=0;i<piece_index_dim;i++){
+		for(int j=0;j<piece_index_dim;j++){
+			weights_sum[i][j] = grad[i][j] = 0;
+		}
+	}
 	int hit_count = 0;
 	int mated_count = 0;
 	Searcher searcher;
@@ -184,34 +207,38 @@ void learn_eval(std::vector<Record>& records){
 	Timer timer;
 	std::shuffle(training_set.begin(), training_set.end(), mt);
 	int cnt = 0;
+	int b = 0;
 	for(int i=0;i < training_set.size();i++){
 		if(i % 10000 == 0){
 			std::cout << hit_count << " / " << i << " " <<mated_count << " " << timer.sec() << "[sec]" << std::endl;
-			int64_t min = 0;
-			for(int j=0;j<weights.size(); j++){
-				min = std::min(min, weights_sum[j]);
-			}
-			std::cout << min << std::endl;
 		}
 		Sample sample = training_set[i];
 		setup_leaning_position(state, records, sample);
 		//Online MMTO
 		bool mated = false;
-		bool ok = learn_one(searcher, state, records[sample.first][sample.second], mt, &mated);
+		bool ok = learn_one(searcher, state, records[sample.first][sample.second], mt, &mated, grad);
 		if(ok)hit_count++;
 		if(mated)mated_count++;
-		for(int j=0;j<weights.size(); j++){
-			weights_sum[j] += weights[j];
+		b++;
+		if(!ok || i + 1== training_set.size()){
+			for(int j=0;j<piece_index_dim; j++){
+				for(int k=0;k<piece_index_dim; k++){
+					weights_sum[j][k] += weights[j][k] * b;
+				}
+			}
+			b = 0;
 		}
 		cnt++;
 	}
 	if(cnt != training_set.size())std::cout << "Invalid" << std::endl;
 	//averaging
-	for(int i=0;i<weights.size(); i++){
-		weights[i] = weights_sum[i] / cnt;
+	for(int i=0;i<piece_index_dim; i++){
+		for(int j=0;j<piece_index_dim; j++){
+			weights[i][j] = weights_sum[i][j] / cnt;
+		}
 	}
 	FILE* fp = fopen("eval.bin", "wb");
-	fwrite(&weights, sizeof(Array<int, piece_index_dim>), 1, fp);
+	fwrite(&weights, sizeof(Array<Array<int, piece_index_dim>, piece_index_dim>), 1, fp);
 	fclose(fp);
 }
 

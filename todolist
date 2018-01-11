@@ -1,5 +1,6 @@
 parallel search
 ponder
-endgame knowledge(K + B + B vs K, K + B + N vs K)
+endgame knowledge
 late move reduction
-piece pair evaluation function
+null move pruning
+
