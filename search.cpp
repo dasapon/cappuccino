@@ -124,7 +124,7 @@ int Searcher::search(State& state, int alpha, int beta, int depth, int ply){
 					&& move != killer[ply][0]
 					&& move != killer[ply][1]){
 				//late move reduction
-				consume += 2 * depth_scale;
+				consume = 2 * depth_scale;
 			}
 		}
 		int v;
