@@ -52,8 +52,7 @@ static float proce(const State& state, Move move, Weights& w, float d){
 	const Player turn = pos.turn_player();
 	Square to = move.to();
 	Square from = move.from();
-	const float progress = (n_pieces - 2.0f) / 30.0f;
-	Float4 coefficients(1.0f, see / 256.0f, 2 * progress - 1.0, capture != Empty? 1 : 0);
+	Float4 coefficients(1.0f, see / 256.0f, 2 * state.progress() - 1.0, capture != Empty? 1 : 0);
 	if(update)flt4 = coefficients * d;
 	//basic move features
 	if(see < 0)proce<update>(SeeMinus, w, flt4);
@@ -62,14 +61,11 @@ static float proce(const State& state, Move move, Weights& w, float d){
 	proce<update>(Capture + capture, w, flt4);
 	if(pos.is_attacked(opponent(turn), from))proce<update>(Escape + 2 * piece + (pos.is_attacked(turn, from)? 1 : 0), w, flt4);
 	if(move.is_promotion())proce<update>(Promotion + move.piece_moved(), w, flt4);
-	//to and piece_list
 	const int piece_index_to = piece_index<false>(move.piece_moved(), to, turn) * piece_index_dim;
-	for(int i=0;i<n_pieces;i++){
-		proce<update>(To + piece_index_to + piece_list[i], w, flt4);
-	}
-	//from and piece_list
+	//piece_list
 	const int piece_index_from = piece_index<false>(piece, from, turn) * piece_index_dim;
 	for(int i=0;i<n_pieces;i++){
+		proce<update>(To + piece_index_to + piece_list[i], w, flt4);
 		proce<update>(From + piece_index_from + piece_list[i], w, flt4);
 	}
 	//previous move
@@ -109,6 +105,25 @@ void calculate_probability(int n,const Array<Move, MaxLegalMove>& moves, Array<f
 }
 
 #ifdef LEARN
+
+static Array<Array<int, piece_index_dim>, friend_piece_index_dim> relation_index;
+static constexpr int relation_dim = 6 * 12 * 15 * 8;
+static void init_relation_table(){
+	for(Piece p = Pawn; p != PieceDim; p++){
+		for(Square sq1 = 0; sq1 < NSquare; sq1++){
+			if(p == Pawn && (sq1 < 8 || sq1 >=56))continue;
+			int index1 = piece_index<false>(p, sq1, White);
+			for(Piece q = Pawn;q != PieceDim;q++){
+				for(Square sq2 = 0; sq2 < NSquare; sq2++){
+					int rel = (rank(sq1) - rank(sq2) + 7) * 8 + std::abs(file(sq1) - file(sq2));
+					if(q == Pawn && (sq2 < 8 || sq2 >=56))continue;
+					relation_index[index1][piece_index<false>(q, sq2, White)] = ((p - Pawn) * 12 + (q - Pawn)) * 15 * 8 + rel;
+					relation_index[index1][piece_index<true>(q, sq2, White)] = ((p - Pawn) * 12 + 6 + (q - Pawn)) * 15 * 8 + rel;
+				}
+			}
+		}
+	}
+}
 
 static void store(){
 	FILE * fp = fopen("probability.bin", "wb");
@@ -152,11 +167,14 @@ double learn_one(const State& state, Move best_move, Weights& grad){
 	return -std::log(best_move_score);
 }
 
+//raw weights
+using LowDimWeights = Array<Float4, relation_dim * 4>;
 void learn_probability(std::vector<Record>& records){
 	if(records.size() < 10000){
 		std::cout << "Data set is too small !" << std::endl;
 		return;
 	}
+	init_relation_table();
 	std::cout << "learning probability ..." << std::endl;
 	std::vector<Sample> training_set = get_training_set(records, 1000);
 	std::mt19937 mt(0);
@@ -166,9 +184,16 @@ void learn_probability(std::vector<Record>& records){
 	constexpr float learning_rate = 0.1f;
 	constexpr float delta = 0.000001f;
 	Timer timer;
-	std::unique_ptr<Weights> grad(new Weights), g2(new Weights);
+	std::unique_ptr<Weights> grad(new Weights), g2(new Weights), weights_raw(new Weights);
+	clear(*weights_raw);
 	clear(*grad);
 	clear(*g2);
+	std::unique_ptr<LowDimWeights> grad_low(new LowDimWeights), g2_low(new LowDimWeights), weights_low(new LowDimWeights);
+	for(int i=0;i<LowDimWeights::size();i++){
+		(*grad_low)[i].clear();
+		(*g2_low)[i].clear();
+		(*weights_low)[i].clear();
+	}
 	for(int epoch = 0;epoch < 4;epoch++){
 		double loss = 0;
 		int cnt = 0;
@@ -180,11 +205,41 @@ void learn_probability(std::vector<Record>& records){
 			loss += learn_one<false>(state, records[sample.first][sample.second], *grad);
 			cnt++;
 			if((i + 1) % batch_size == 0){
-				//update weights
+				//calculate grad_low
+				for(int p = 0; p < friend_piece_index_dim;p++){
+					for(int q = 0;q < piece_index_dim;q++){
+						int rel = relation_index[p][q];
+						int abs = p * piece_index_dim + q;
+						(*grad_low)[rel] += (*grad)[To + abs];
+						(*grad_low)[relation_dim + rel] += (*grad)[From + abs];
+						(*grad_low)[2 * relation_dim + rel] += (*grad)[PreviousTo + abs];
+						(*grad_low)[3 * relation_dim + rel] += (*grad)[PreviousFrom + abs];
+					}
+				}
+				//update low weights
+				for(int i=0;i<LowDimWeights::size();i++){
+					Float4 g = (*grad_low)[i];
+					(*g2_low)[i] += g * g;
+					(*weights_low)[i] -= g * learning_rate / ((*g2_low)[i].sqrt() + delta);
+					(*grad_low)[i].clear();
+				}
+				//update raw weights
 				for(int i=0;i<Weights::size();i++){
 					Float4 g = (*grad)[i];
 					(*g2)[i] += g * g;
-					weights[i] -= g * learning_rate / ((*g2)[i].sqrt() + delta);
+					(*weights_raw)[i] -= g * learning_rate / ((*g2)[i].sqrt() + delta);
+					weights[i] = (*weights_raw)[i];
+				}
+				//add weights_low
+				for(int p = 0; p < friend_piece_index_dim;p++){
+					for(int q = 0;q < piece_index_dim;q++){
+						int rel = relation_index[p][q];
+						int abs = p * piece_index_dim + q;
+						weights[To + abs] += (*weights_low)[rel];
+						weights[From + abs] += (*weights_low)[relation_dim + rel];
+						weights[PreviousTo + abs] += (*weights_low)[2 * relation_dim + rel];
+						weights[PreviousFrom + abs] += (*weights_low)[3 * relation_dim + rel];
+					}
 				}
 				clear(*grad);
 			}

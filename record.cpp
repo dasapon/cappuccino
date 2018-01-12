@@ -17,7 +17,6 @@ static std::vector<std::string> read_block(std::ifstream& ifs){
 
 std::vector<std::vector<Move>> read_pgn(std::string file_name, int elo){
 	std::ifstream ifs(file_name);
-	int n_record = 0;
 	std::vector<Record> records;
 	while(true){
 		std::vector<std::string> tags = read_block(ifs);
@@ -54,8 +53,8 @@ std::vector<std::vector<Move>> read_pgn(std::string file_name, int elo){
 			}
 		}
 		records.push_back(record);
-		if(++n_record%10000==0)std::cout << n_record<<std::endl;
 	}
+	std::cout << records.size() <<std::endl;
 	ifs.close();
 	return records;
 }

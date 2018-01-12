@@ -114,7 +114,6 @@ enum{
 	QueenValue = 1000,
 };
 constexpr int depth_scale = 8;
-constexpr int learning_ply_limit = 512;
 extern const Array<int, PieceDim> material_value;
 
 enum {

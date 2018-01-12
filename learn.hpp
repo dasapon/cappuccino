@@ -12,7 +12,7 @@ inline std::vector<Sample> get_training_set(std::vector<Record>& records, int te
 	std::vector<Sample> training_set;
 	std::shuffle(records.begin(), records.end(), mt);
 	for(int i=1000;i<records.size();i++){
-		for(int j=0;j<records[i].size() && j < learning_ply_limit;j++){
+		for(int j=0;j<records[i].size();j++){
 			training_set.push_back(Sample(i, j));
 		}
 	}
