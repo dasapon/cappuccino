@@ -4,6 +4,7 @@ BitBoardTable knight_attack_table, king_attack_table;
 BitBoardTable rank_mask_table, file_mask_table, diag_mask_table, diag2_mask_table;
 Array<BitBoardTable, PlayerDim> pawn_attack_table;
 Array<BitBoardTable, NSquare> sandwiched_squares;
+Array<BitBoardTable, PlayerDim> forward3_table;
 
 static Array<Array<BitBoard, 64>, 8> rank_diag_attack_table, file_attack_table;
 
@@ -93,7 +94,7 @@ void init_bitboard_tables(){
 		}
 	}
 	//init sandwiched squares
-	for(Square sq1 = 0;sq1 < NSquare;sq1++){
+	for(Square sq1 = 0; sq1 < NSquare; sq1++){
 		for(Square sq2 = 0; sq2 < NSquare; sq2++){
 			BitBoard bb = bb_sq(sq1) | bb_sq(sq2);
 			sandwiched_squares[sq1][sq2] =
@@ -102,6 +103,18 @@ void init_bitboard_tables(){
 				| (rank_diag_attack(sq1, bb, diag2_mask_table[sq1]) & rank_diag_attack(sq2, bb, diag2_mask_table[sq2]))
 				| (file_attack(sq1, bb) & file_attack(sq2, bb));
 		}
+	}
+	//init forward3_table
+	for(Square sq = 0;sq < NSquare; sq++){
+		BitBoard bb = bb_sq(sq);
+		bb |= left(bb) | right(sq);
+		BitBoard bb_u = 0, bb_d = 0;
+		for(int i=1;i<8;i++){
+			bb_u |= bb << (i * 8);
+			bb_d |= bb >> (i * 8);
+		}
+		forward3_table[White][sq] = bb_u;
+		forward3_table[Black][sq] = bb_d;
 	}
 }
 

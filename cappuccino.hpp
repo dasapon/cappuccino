@@ -54,6 +54,7 @@ inline void operator++(Player& p, int){
 }
 enum Piece{
 	Empty, Pawn, Knight, Bishop, Rook, Queen, King, PieceDim,
+	PassedPawn = 0,
 };
 
 inline void operator^=(Piece& p1, Piece p2){
@@ -117,14 +118,16 @@ constexpr int depth_scale = 8;
 extern const Array<int, PieceDim> material_value;
 
 enum {
-	pawn_index = -8,
+	passed_pawn_index = -8,
+	pawn_index = passed_pawn_index + 64 - 16,
 	knight_index = pawn_index + 64 - 8,
 	bishop_index = knight_index + 64,
 	rook_index = bishop_index + 64,
 	queen_index = rook_index + 64,
 	king_index = queen_index + 64,
 	friend_piece_index_dim = king_index + 64,
-	enemy_pawn_index = friend_piece_index_dim - 8,
+	enemy_passed_pawn_index = friend_piece_index_dim - 8,
+	enemy_pawn_index = enemy_passed_pawn_index + 64 - 16,
 	enemy_knight_index = enemy_pawn_index + 64 - 8,
 	enemy_bishop_index = enemy_knight_index + 64,
 	enemy_rook_index = enemy_bishop_index + 64,

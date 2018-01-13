@@ -6,8 +6,8 @@ BIN_DIR := ../bin
 CC := clang++
 EXE := cappuccino
 LEXE := cappuccino_learn
-OBJ_DIR := ../obj/
-LOBJ_DIR := ../learnobj/
+OBJ_DIR := ../obj
+LOBJ_DIR := ../learnobj
 OBJECTS = $(SOURCES:%.cpp=$(OBJ_DIR)/%.o)
 LOBJECTS = $(SOURCES:%.cpp=$(LOBJ_DIR)/%.o)
 
@@ -31,6 +31,8 @@ $(BIN_DIR)/$(LEXE): $(LOBJECTS)
 clean:
 	rm -f $(OBJ_DIR)/*.o
 	rm -f $(OBJ_DIR)/*.d
+	rm -f $(LOBJ_DIR)/*.o
+	rm -f $(LOBJ_DIR)/*.d
 
 $(OBJ_DIR)/%.o:%.cpp
 	if [ ! -d $(OBJ_DIR) ] ; then mkdir -p $(OBJ_DIR); fi
@@ -39,6 +41,3 @@ $(OBJ_DIR)/%.o:%.cpp
 $(LOBJ_DIR)/%.o:%.cpp
 	if [ ! -d $(LOBJ_DIR) ] ; then mkdir -p $(LOBJ_DIR); fi
 	$(CC) $(OPTIONS) -DLEARN -c -MMD -MP -MF $(@:%.o=%.d) -o $@ $<
-
-
-

@@ -107,18 +107,18 @@ void calculate_probability(int n,const Array<Move, MaxLegalMove>& moves, Array<f
 #ifdef LEARN
 
 static Array<Array<int, piece_index_dim>, friend_piece_index_dim> relation_index;
-static constexpr int relation_dim = 6 * 12 * 15 * 8;
+static constexpr int relation_dim = 7 * 14 * 15 * 8;
 static void init_relation_table(){
-	for(Piece p = Pawn; p != PieceDim; p++){
+	for(Piece p = PassedPawn; p != PieceDim; p++){
 		for(Square sq1 = 0; sq1 < NSquare; sq1++){
-			if(p == Pawn && (sq1 < 8 || sq1 >=56))continue;
+			if((p == Pawn || p == PassedPawn) && (sq1 < 8 || sq1 >=56))continue;
 			int index1 = piece_index<false>(p, sq1, White);
-			for(Piece q = Pawn;q != PieceDim;q++){
+			for(Piece q = PassedPawn;q != PieceDim;q++){
 				for(Square sq2 = 0; sq2 < NSquare; sq2++){
 					int rel = (rank(sq1) - rank(sq2) + 7) * 8 + std::abs(file(sq1) - file(sq2));
-					if(q == Pawn && (sq2 < 8 || sq2 >=56))continue;
-					relation_index[index1][piece_index<false>(q, sq2, White)] = ((p - Pawn) * 12 + (q - Pawn)) * 15 * 8 + rel;
-					relation_index[index1][piece_index<true>(q, sq2, White)] = ((p - Pawn) * 12 + 6 + (q - Pawn)) * 15 * 8 + rel;
+					if((q == Pawn || q == PassedPawn) && (sq2 < 8 || sq2 >=56))continue;
+					relation_index[index1][piece_index<false>(q, sq2, White)] = (p * 14 + q) * 15 * 8 + rel;
+					relation_index[index1][piece_index<true>(q, sq2, White)] = (p * 14 + 7 + q) * 15 * 8 + rel;
 				}
 			}
 		}

@@ -127,7 +127,7 @@ void Position::load_fen(const FEN& fen){
 	//init board
 	int f = 0;int r = 7;
 	for(char c:fen[0]){
-		assert(f < 8);
+		assert(f < 8 || (f == 8 && c == '/'));
 		assert(r >= 0);
 		if(c == '/'){
 			r--;
@@ -189,12 +189,12 @@ bool Position::immediately_draw()const{
 }
 
 static const Array<int, PieceDim> piece_index_table({
-	0, pawn_index, knight_index, bishop_index, 
+	passed_pawn_index, pawn_index, knight_index, bishop_index, 
 	rook_index, queen_index, king_index,
 });
 
 static const Array<int, PieceDim> enemy_piece_index_table({
-	0, enemy_pawn_index, enemy_knight_index, enemy_bishop_index, 
+	enemy_passed_pawn_index, enemy_pawn_index, enemy_knight_index, enemy_bishop_index, 
 	enemy_rook_index, enemy_queen_index, enemy_king_index,
 });
 
@@ -207,7 +207,7 @@ template int piece_index<true>(Piece p, Square sq, Player side);
 template int piece_index<false>(Piece p, Square sq, Player side);
 int Position::piece_list(Array<int, 32>& list)const{
 	int ret = 0;
-	for(Piece p = Pawn;p < PieceDim;p++){
+	for(Piece p = Knight;p < PieceDim;p++){
 		BitBoard bb = get_bb(turn, p);
 		while(bb){
 			Square sq = pop_one(bb);
@@ -218,6 +218,25 @@ int Position::piece_list(Array<int, 32>& list)const{
 			Square sq = pop_one(bb);
 			list[ret++] = piece_index<true>(p, sq, turn);
 		}
+	}
+	//pawns and passed pawns
+	BitBoard bb = get_bb(turn, Pawn);
+	BitBoard enemy_pawns = get_bb(opponent(turn), Pawn);
+	while(bb){
+		Square sq = pop_one(bb);
+		if(enemy_pawns & forward3_table[turn][sq])
+			list[ret++] = piece_index<false>(Pawn, sq, turn);
+		else
+			list[ret++] = piece_index<false>(PassedPawn, sq, turn);
+	}
+	bb = enemy_pawns;
+	enemy_pawns = get_bb(turn, Pawn);
+	while(bb){
+		Square sq = pop_one(bb);
+		if(enemy_pawns & forward3_table[opponent(turn)][sq])
+			list[ret++] = piece_index<true>(Pawn, sq, turn);
+		else
+			list[ret++] = piece_index<true>(PassedPawn, sq, turn);
 	}
 	return ret;
 }

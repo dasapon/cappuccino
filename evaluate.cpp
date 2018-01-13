@@ -176,13 +176,14 @@ void learn_eval(std::vector<Record>& records){
 			weights[i][j] = 0;
 		}
 	}
-	for(Piece p = Pawn; p != PieceDim; p++){
+	for(Piece p = PassedPawn; p != PieceDim; p++){
 		for(Square sq = 0; sq < NSquare; sq++){
-			if(p == Pawn && (sq < 8 || sq >=56))continue;
+			if((p == Pawn || p == PassedPawn) && (sq < 8 || sq >=56))continue;
 			int id = piece_index<false>(p, sq, White);
 			int id_rev = piece_index<true>(p, sq, White);
-			weights[id][id] = material_value[p] * eval_scale;
-			weights[id_rev][id_rev] = -material_value[p] * eval_scale;
+			int v = (p == PassedPawn? PawnValue : material_value[p]) * eval_scale;
+			weights[id][id] = v;
+			weights[id_rev][id_rev] = -v;
 		}
 	}
 	if(records.size() < 10000){
