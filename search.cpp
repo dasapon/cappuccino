@@ -63,7 +63,7 @@ void Searcher::go(State& state, uint64_t time, uint64_t inc, bool ponder_or_infi
 }
 
 int Searcher::search_w(State& state, int alpha, int beta, int depth, int ply){
-	if(depth > 0)return search(state, alpha, beta, depth, ply);
+	if(depth >= depth_scale)return search(state, alpha, beta, depth, ply);
 	else return qsearch(state, alpha, beta, 0, ply);
 }
 int Searcher::search(State& state, int alpha, int beta, int depth, int ply){
