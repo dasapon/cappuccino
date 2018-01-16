@@ -65,6 +65,7 @@ public:
 	void go(State& state, uint64_t time, uint64_t inc, bool ponder_or_infinite);
 	int think(State& state, int max_depth, PV& pv, bool print);
 	int think(State& state, int max_depth, bool print);
+	void hash_size(size_t mb){hash_table.set_size(mb);}
 	//time control
 private:
 	volatile bool abort;

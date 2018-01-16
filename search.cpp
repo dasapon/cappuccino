@@ -198,7 +198,7 @@ int Searcher::qsearch(State& state, int alpha, int beta, int depth, int ply){
 		if(stand_pat >= beta)return stand_pat;
 	}
 	//generate moves
-	MoveOrdering move_ordering(state, NullMove);
+	MoveOrdering move_ordering(state, hash_move);
 	while(true){
 		float score;
 		Move move = move_ordering.next(&score);

@@ -25,6 +25,7 @@ void uci_loop(){
 		if(cmds[0] == "uci"){
 			std::cout << "id name Cappuccino" << std::endl;
 			std::cout << "id auther Watanabe Keisuke" << std::endl;
+			std::cout << "option name Hash type spin default 32 min 1 max 8192" << std::endl;
 			std::cout << "uciok" << std::endl;
 		}
 		else if(cmds[0] == "isready"){
@@ -33,6 +34,11 @@ void uci_loop(){
 		else if(cmds[0] == "ucinewgame"){
 		}
 		else if(cmds[0] == "setoption"){
+			if(cmds.size() == 5 && cmds[1] == "name" && cmds[3] == "value"){
+				if(cmds[2] == "Hash"){
+					searcher.hash_size(std::stoi(cmds[4]));
+				}
+			}
 		}
 		else if(cmds[0] == "position"){
 			state.set_up(cmds);

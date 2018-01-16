@@ -48,9 +48,19 @@ MoveOrdering::MoveOrdering(const State& state, Move hash_move):idx(0), state(sta
 	status = All;
 	const Position& pos = state.pos();
 	n_moves = pos.generate_important_moves(moves, 0);
-	for(int i=0;i<n_moves;i++){
-		if(pos.is_suicide_move(moves[i]))moves[i--] = moves[--n_moves];
-		scores[i] = mvv_lva(moves[i]);
+	if(pos.check()){
+		for(int i=0;i<n_moves;i++){
+			if(pos.is_suicide_move(moves[i]))moves[i--] = moves[--n_moves];
+			else if(moves[i] == hash_move)scores[i] = QueenValue << 8;
+			else scores[i] = pos.see(moves[i]);
+		}
+	}
+	else{
+		for(int i=0;i<n_moves;i++){
+			if(pos.is_suicide_move(moves[i]))moves[i--] = moves[--n_moves];
+			else if(moves[i] == hash_move)scores[i] = QueenValue << 8;
+			else scores[i] = mvv_lva(moves[i]);
+		}
 	}
 	insertion_sort(0, n_moves);
 }

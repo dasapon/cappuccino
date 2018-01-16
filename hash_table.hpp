@@ -30,8 +30,11 @@ public:
 	Move move()const{
 		return Move(static_cast<int>(word1 & ~key_mask));
 	}
+	int depth()const{
+		return static_cast<int>((word2 >> 32) & 0xffff) - 512;
+	}
 	bool hash_cut(int& value, int alpha, int beta, int depth){
-		int d = static_cast<int>((word2 >> 32) & 0xffff) - 512;
+		int d = this->depth();
 		if(d >= depth){
 			int v = static_cast<int>(word2 >> 48) - ValueINF;
 			uint64_t flg = word2 & exact;
@@ -50,6 +53,9 @@ public:
 		}
 		return false;
 	}
+	uint64_t generation()const{
+		return word2 & 0xf;
+	}
 };
 
 class HashTable{
@@ -66,7 +72,7 @@ public:
 	}
 	void clear(){
 		memset(table, 0, sizeof(HashEntry) * (mask + 1));
-		generation = 0;
+		generation = 1;
 	}
 	void new_gen(){generation = (generation + 1) & 0xf;}
 	HashTable():table(nullptr),generation(0){
@@ -83,6 +89,9 @@ public:
 	}
 	void store(const Position& pos, Move move, int depth, int value, int alpha, int beta){
 		uint64_t key = pos.key();
-		table[key & mask] = HashEntry(key, move, depth, value, alpha, beta, generation);
+		HashEntry entry(key, move, depth, value, alpha, beta, generation);
+		const uint64_t idx = key & mask;
+		if(table[idx].generation() != generation
+			|| table[idx].depth() <= depth)table[idx] = entry;
 	}
 };
