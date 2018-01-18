@@ -133,7 +133,8 @@ enum {
 	enemy_rook_index = enemy_bishop_index + 64,
 	enemy_queen_index = enemy_rook_index + 64,
 	enemy_king_index = enemy_queen_index + 64,
-	piece_index_dim = enemy_king_index + 64,
+	piece_none_index = enemy_king_index + 64,
+	piece_index_dim = piece_none_index + 32,
 };
 
 template <bool is_enemy>

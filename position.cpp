@@ -238,5 +238,9 @@ int Position::piece_list(Array<int, 32>& list)const{
 		else
 			list[ret++] = piece_index<true>(PassedPawn, sq, turn);
 	}
+	if(ret < 32){
+		list[ret] = piece_none_index + 31 - ret;
+		ret++;
+	}
 	return ret;
 }

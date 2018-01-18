@@ -207,7 +207,7 @@ void learn_probability(std::vector<Record>& records){
 			if((i + 1) % batch_size == 0){
 				//calculate grad_low
 				for(int p = 0; p < friend_piece_index_dim;p++){
-					for(int q = 0;q < piece_index_dim;q++){
+					for(int q = 0;q < piece_none_index;q++){
 						int rel = relation_index[p][q];
 						int abs = p * piece_index_dim + q;
 						(*grad_low)[rel] += (*grad)[To + abs];
@@ -232,7 +232,7 @@ void learn_probability(std::vector<Record>& records){
 				}
 				//add weights_low
 				for(int p = 0; p < friend_piece_index_dim;p++){
-					for(int q = 0;q < piece_index_dim;q++){
+					for(int q = 0;q < piece_none_index;q++){
 						int rel = relation_index[p][q];
 						int abs = p * piece_index_dim + q;
 						weights[To + abs] += (*weights_low)[rel];
