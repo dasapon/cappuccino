@@ -54,9 +54,15 @@ int Position::endgame_eval()const{
 		if(pieces[Queen] | pieces[Rook]){
 			return -AlmostWin - sweep_table[king_sq[turn]];
 		}
-		//K+N+N vs K
-		if(n == 4 && more_than_one(pieces[Knight])){
-			return 0;
+		if(n == 4){
+			//K+N+N vs K
+			if(more_than_one(pieces[Knight])){
+				return 0;
+			}
+			//K+B+B vs K
+			if(more_than_one(pieces[Bishop])){
+				return -AlmostWin - sweep_table[king_sq[turn]];
+			}
 		}
 	}
 	else if(!more_than_one(occupied[enemy])){
@@ -64,14 +70,27 @@ int Position::endgame_eval()const{
 		if(pieces[Queen] | pieces[Rook]){
 			return AlmostWin + sweep_table[king_sq[enemy]];
 		}
-		//K+N+N vs K
-		if(n == 4 && more_than_one(pieces[Knight])){
-			return 0;
+		if(n == 4){
+			//K+N+N vs K
+			if(more_than_one(pieces[Knight])){
+				return 0;
+			}
+			//K+B+B vs K
+			if(more_than_one(pieces[Bishop])){
+				return AlmostWin + sweep_table[king_sq[turn]];
+			}
 		}
 	}
-	else if(n == 4 && more_than_one(pieces[Knight] | pieces[Bishop])){
+
+	else if(n == 4){
 		//K+(N|B) vs K+(N|B)
-		return 0;
+		if(more_than_one(pieces[Knight] | pieces[Bishop])){
+			return 0;
+		}
+		//K+R vs K+R
+		if(more_than_one(pieces[Rook]))return 0;
+		//K+Q vs K+Q
+		if(more_than_one(pieces[Queen]))return 0;
 	}
 	return ValueINF;
 }

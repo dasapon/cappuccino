@@ -53,7 +53,7 @@ public:
 	int endgame_eval()const;
 	bool immediately_draw()const;
 	uint64_t key()const{
-		uint64_t ret = hash_key;
+		uint64_t ret = hash_key ^ turn;
 		ret ^= enpassant_bb;
 		if(castling_flags[White][CastlingFlag::Short])ret ^= hash_seed[White][Empty][0];
 		if(castling_flags[White][CastlingFlag::Long])ret ^= hash_seed[White][Empty][1];

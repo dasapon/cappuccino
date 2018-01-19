@@ -121,7 +121,6 @@ void Position::make_move(Move move){
 		}
 	}
 	turn = opponent(turn);
-	hash_key ^= 1ULL;
 	if(captured != Empty || move.piece() == Pawn)half_move_counter = 0;
 	else half_move_counter++;
 }
