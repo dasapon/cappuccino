@@ -10,11 +10,13 @@ enum{
 	Capture,
 	Promotion = Capture + King - Knight,
 	Escape = Promotion + King - 2 * Pawn,
-	To = Escape + 2 * PieceDim,
+	OpenEffect = Escape + 2 * PieceDim,
+	To,
 	From = To + friend_piece_index_dim * piece_index_dim,
 	PreviousTo = From + friend_piece_index_dim * piece_index_dim,
 	PreviousFrom = PreviousTo + friend_piece_index_dim * piece_index_dim,
-	Dim = PreviousFrom + friend_piece_index_dim * piece_index_dim,
+	ReCapture = PreviousFrom + friend_piece_index_dim * piece_index_dim,
+	Dim,
 };
 
 using Weights = Array<Float4, Dim>;
@@ -59,7 +61,9 @@ static float proce(const State& state, Move move, Weights& w, float d){
 	if(move.is_castling())proce<update>(Castling, w, flt4);
 	if(check)proce<update>(Check, w, flt4);
 	proce<update>(Capture + capture, w, flt4);
-	if(pos.is_attacked(opponent(turn), from))proce<update>(Escape + 2 * piece + (pos.is_attacked(turn, from)? 1 : 0), w, flt4);
+	const Piece min_attacker = pos.least_valuable_attacker(turn, from);
+	if(min_attacker > Knight && min_attacker < King)proce<update>(OpenEffect, w, flt4);
+	if(pos.is_attacked(opponent(turn), from))proce<update>(Escape + 2 * piece + (min_attacker != Empty? 1 : 0), w, flt4);
 	if(move.is_promotion())proce<update>(Promotion + move.piece_moved(), w, flt4);
 	const int piece_index_to = piece_index<false>(move.piece_moved(), to, turn) * piece_index_dim;
 	//piece_list
@@ -75,6 +79,7 @@ static float proce(const State& state, Move move, Weights& w, float d){
 		const int piece_index_last = piece_index<true>(last_move.piece_moved(), last_move.to(), turn);
 		proce<update>(PreviousTo + piece_index_to + piece_index_last, w, flt4);
 		proce<update>(PreviousFrom + piece_index_from + piece_index_last, w, flt4);
+		if(last_move.capture() != Empty && capture != Empty)proce<update>(ReCapture, w, flt4);
 	}
 	if(second_last_move != NullMove){
 		const int piece_index_second_last = piece_index<false>(second_last_move.piece_moved(), second_last_move.to(), turn);
@@ -182,6 +187,7 @@ void learn_probability(std::vector<Record>& records){
 	clear(weights);
 	constexpr int batch_size = 10000;
 	constexpr float learning_rate = 0.1f;
+	constexpr float l1penalty = 0.001f;
 	constexpr float delta = 0.000001f;
 	Timer timer;
 	std::unique_ptr<Weights> grad(new Weights), g2(new Weights), weights_raw(new Weights);
@@ -216,18 +222,24 @@ void learn_probability(std::vector<Record>& records){
 						(*grad_low)[3 * relation_dim + rel] += (*grad)[PreviousFrom + abs];
 					}
 				}
+				//update function (AdaGrad)
+				auto update = [=](Float4& w, Float4& g, Float4& g2){
+					//penalty
+					for(int i=0;i<4;i++){
+						if(w[i] > 0)g[i] += l1penalty;
+						else if(w[i] < 0)g[i] -= l1penalty;
+					}
+					g2 += g * g;
+					w -= g * learning_rate / (g2.sqrt() + delta);
+					g.clear();
+				};
 				//update low weights
 				for(int i=0;i<LowDimWeights::size();i++){
-					Float4 g = (*grad_low)[i];
-					(*g2_low)[i] += g * g;
-					(*weights_low)[i] -= g * learning_rate / ((*g2_low)[i].sqrt() + delta);
-					(*grad_low)[i].clear();
+					update((*weights_low)[i], (*grad_low)[i], (*g2_low)[i]);
 				}
 				//update raw weights
 				for(int i=0;i<Weights::size();i++){
-					Float4 g = (*grad)[i];
-					(*g2)[i] += g * g;
-					(*weights_raw)[i] -= g * learning_rate / ((*g2)[i].sqrt() + delta);
+					update((*weights_raw)[i], (*grad)[i], (*g2)[i]);
 					weights[i] = (*weights_raw)[i];
 				}
 				//add weights_low

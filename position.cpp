@@ -25,6 +25,21 @@ bool Position::is_attacked(Player p, Square sq, BitBoard customized_all, BitBoar
 	if(piece_attack<Bishop>(sq, customized_all) & occupied[p] & (pieces[Bishop] | pieces[Queen]) & ~ignored)return true;
 	return (pawn_attack_table[opponent(p)][sq] & get_bb(p, Pawn) & ~ignored) != 0;
 }
+Piece Position::least_valuable_attacker(Player p, Square sq)const{
+	BitBoard bb = pawn_attack_table[opponent(p)][sq] & get_bb(p, Pawn);
+	if(bb) return Pawn;
+	bb = piece_attack<Knight>(sq, all_bb) & get_bb(p, Knight);
+	if(bb) return Knight;
+	bb = piece_attack<Bishop>(sq, all_bb) & get_bb(p, Bishop);
+	if(bb) return Bishop;
+	bb = piece_attack<Rook>(sq, all_bb) & get_bb(p, Rook);
+	if(bb) return Rook;
+	bb = piece_attack<Queen>(sq, all_bb) & get_bb(p, Queen);
+	if(bb) return Queen;
+	bb = piece_attack<King>(sq, all_bb) & get_bb(p, King);
+	if(bb) return King;
+	return Empty;
+}
 BitBoard Position::least_valuable_attacker(Player p, Square sq, BitBoard customized_all, BitBoard ignored)const{
 	BitBoard bb = pawn_attack_table[opponent(p)][sq] & get_bb(p, Pawn) & ~ ignored;
 	if(bb) return bb & -bb;

@@ -80,7 +80,8 @@ void uci_loop(){
 			std::cout << evaluate(state) << std::endl;
 		}
 		else if(cmds[0] == "key"){
-			std::cout << state.pos().key() << std::endl;
+			std::cout << "hashkey = " << state.pos().key() << std::endl;
+			std::cout << state.draw() << std::endl;
 		}
 		else if(cmds[0] == "piece_list"){
 			int n;

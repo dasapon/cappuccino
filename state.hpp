@@ -60,7 +60,7 @@ public:
 	bool draw()const{
 		if(pos().immediately_draw())return true;
 		uint64_t key = pos().key();
-		for(int i = ply-1, e = std::max(0, ply - 8);i >= e; i--){
+		for(int i = ply-1, e = std::max(0, ply - 16);i >= e; i--){
 			if(history[i].pos.key() == key)return true;
 		}
 		return false;

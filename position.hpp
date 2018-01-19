@@ -32,6 +32,7 @@ class Position{
 	int see_sub(Player side, Square sq, BitBoard all, BitBoard ignored, int hanged)const;
 public:
 	bool is_attacked(Player p, Square sq)const;
+	Piece least_valuable_attacker(Player p, Square sq)const;
 	static void init_hash_seed();
 	BitBoard empty_bb()const{return ~(occupied[White] | occupied[Black]);}
 	int generate_important_moves(Array<Move, MaxLegalMove>&, int)const;
