@@ -39,9 +39,6 @@ public:
 		*n = history[ply].n_pieces;
 		return history[ply].piece_list;
 	}
-	float progress()const{
-		return 1.0f - (history[ply].n_pieces - 2.0f) / 30.0f;
-	}
 	Move previous_move(int i)const{
 		if(ply < i)return NullMove;
 		return history[ply - i].last_move;

@@ -54,7 +54,7 @@ static float proce(const State& state, Move move, Weights& w, float d){
 	const Player turn = pos.turn_player();
 	Square to = move.to();
 	Square from = move.from();
-	Float4 coefficients(1.0f, see / 256.0f, 2 * state.progress() - 1.0, capture != Empty? 1 : 0);
+	Float4 coefficients(1.0f, see / 256.0f, 2 * pos.progress() - 1.0, capture != Empty? 1 : 0);
 	if(update)flt4 = coefficients * d;
 	//basic move features
 	if(see < 0)proce<update>(SeeMinus, w, flt4);
@@ -213,7 +213,7 @@ void learn_probability(std::vector<Record>& records){
 			if((i + 1) % batch_size == 0){
 				//calculate grad_low
 				for(int p = 0; p < friend_piece_index_dim;p++){
-					for(int q = 0;q < piece_none_index;q++){
+					for(int q = 0;q < endgame_type_index;q++){
 						int rel = relation_index[p][q];
 						int abs = p * piece_index_dim + q;
 						(*grad_low)[rel] += (*grad)[To + abs];
@@ -244,7 +244,7 @@ void learn_probability(std::vector<Record>& records){
 				}
 				//add weights_low
 				for(int p = 0; p < friend_piece_index_dim;p++){
-					for(int q = 0;q < piece_none_index;q++){
+					for(int q = 0;q < endgame_type_index;q++){
 						int rel = relation_index[p][q];
 						int abs = p * piece_index_dim + q;
 						weights[To + abs] += (*weights_low)[rel];
