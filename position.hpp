@@ -1,7 +1,7 @@
 #pragma once
 
 #include "move.hpp"
-#include "bitboard.hpp"
+
 
 extern const FEN startpos;
 class Position{
@@ -44,7 +44,6 @@ public:
 	Position(const Position& pos){(*this) = pos;}
 	Position(const FEN& fen){load_fen(fen);}
 	Position(){}
-	float progress()const{return (32 - popcnt(all_bb)) / 30.0f;}
 	Player turn_player()const{return turn;}
 	bool check()const{return is_attacked(opponent(turn), king_sq[turn]);}
 	bool is_suicide_move(Move move) const;

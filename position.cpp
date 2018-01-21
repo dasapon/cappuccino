@@ -252,13 +252,9 @@ int Position::piece_list(Array<int, 32>& list)const{
 		else
 			list[ret++] = piece_index<true>(PassedPawn, sq, turn);
 	}
-	if(ret <= 16){
-		int endgame_type = endgame_type_index;
-		if(pieces[Knight])endgame_type +=1;
-		if(pieces[Bishop])endgame_type +=2;
-		if(pieces[Rook])endgame_type +=4;
-		if(pieces[Queen])endgame_type +=8;
-		list[ret++] = endgame_type;
+	if(ret < 32){
+		list[ret] = piece_none_index + 31 - ret;
+		ret++;
 	}
 	return ret;
 }
