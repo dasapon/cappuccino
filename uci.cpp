@@ -23,7 +23,7 @@ void uci_loop(){
 			break;
 		}
 		if(cmds[0] == "uci"){
-			std::cout << "id name Cappuccino" << std::endl;
+			std::cout << "id name Cappuccino 0.1.0" << std::endl;
 			std::cout << "id auther Watanabe Keisuke" << std::endl;
 			std::cout << "option name Hash type spin default 32 min 1 max 8192" << std::endl;
 			std::cout << "uciok" << std::endl;
@@ -62,6 +62,7 @@ void uci_loop(){
 			searcher.stop();
 		}
 		else if(cmds[0] == "ponderhit"){
+			searcher.ponder_hit();
 		}
 		//debug commands
 		else if(cmds[0] == "genmove"){

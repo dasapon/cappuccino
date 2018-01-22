@@ -44,7 +44,9 @@ int Searcher::think(State& state, int max_depth, PV& pv, bool print){
 	//bestmove
 	if(print){
 		if(pv[0] != NullMove){
-			std::cout << "bestmove " << pv[0].to_lan() << std::endl;
+			std::cout << "bestmove " << pv[0].to_lan();
+			if(pv[1] != NullMove)
+				std::cout << " ponder " << pv[1].to_lan() << std::endl;
 		}
 		else{
 			std::cout << "bestmove resign"<<std::endl;
