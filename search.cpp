@@ -60,7 +60,7 @@ void Searcher::go(State& state, uint64_t time, uint64_t inc, bool ponder_or_infi
 	abort = false;
 	timer_start(time, inc, ponder_or_infinite);
 	main_thread = std::thread([&](){
-		think(std::ref(state), 25, true);
+		think(std::ref(state), 32, true);
 	});
 }
 
