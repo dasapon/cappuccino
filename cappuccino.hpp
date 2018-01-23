@@ -102,6 +102,7 @@ class Position;
 extern uint64_t perft(Position&, int);
 extern bool unit_test_perft();
 extern bool unit_test_see();
+extern void search_test();
 extern void uci_loop();
 
 enum{

@@ -8,10 +8,14 @@ int main(int argc, char* argv[]){
 	Position::init_hash_seed();
 	load_proabiblity();
 	load_eval();
-	if(argc > 1 && std::string(argv[1]) == "test"){
+	if(argc > 1 && std::string(argv[1]) == "unit_test"){
 		bool ok = unit_test_perft();
 		ok &= unit_test_see();
 		std::cout << "Unit test is " << (ok? "succeed" : "failed") << std::endl;
+		return 0;
+	}
+	if(argc > 1 && std::string(argv[1]) == "search_test"){
+		search_test();
 		return 0;
 	}
 #ifdef LEARN

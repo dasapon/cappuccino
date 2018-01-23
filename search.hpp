@@ -66,6 +66,7 @@ public:
 	int think(State& state, int max_depth, PV& pv, bool print);
 	int think(State& state, int max_depth, bool print);
 	void hash_size(size_t mb){hash_table.set_size(mb);}
+	uint64_t node_searched()const{return nodes;}
 	//time control
 private:
 	volatile bool abort;
