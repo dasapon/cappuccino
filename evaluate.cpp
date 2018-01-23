@@ -26,7 +26,38 @@ const Array<int, PieceDim> material_value({
 	MateValue,
 });
 
-static Array<Array<int, piece_index_dim>, piece_index_dim> weights;
+template<typename Ty>
+struct EvalTable{
+	Array<Array<Ty, piece_index_dim>, piece_index_dim> piece_pair;
+	template<typename T2>
+	void operator+=(const EvalTable<T2>& tbl){
+		for(int i=0;i<piece_index_dim;i++){
+			for(int j=0;j<piece_index_dim;j++){
+				piece_pair[i][j] += tbl.piece_pair[i][j];
+			}
+		}
+	}
+	void operator/=(int x){
+		for(int i=0;i<piece_index_dim;i++){
+			for(int j=0;j<piece_index_dim;j++){
+				piece_pair[i][j] /= x;
+			}
+		}
+	}
+	void clear(){
+		memset(this, 0, sizeof(EvalTable<Ty>));
+	}
+};
+template<typename F, typename T1, typename T2>
+static void for_each_table(EvalTable<T1>& tbl1, EvalTable<T2>& tbl2, F proce){
+	for(int i=0;i<piece_index_dim;i++){
+		for(int j=0;j<piece_index_dim;j++){
+			proce(tbl1.piece_pair[i][j], tbl2.piece_pair[i][j]);
+		}
+	}
+}
+
+static EvalTable<int> weights;
 
 int evaluate(const State& state){
 	const Position& pos = state.pos();
@@ -36,10 +67,11 @@ int evaluate(const State& state){
 	int n_pieces;
 	const Array<int, 32>& list = state.get_piece_list(&n_pieces);
 	int v = 0;
+	//piece pair
 	for(int i=0;i<n_pieces;i++){
 		const int p1 =list[i];
 		for(int j=i;j<n_pieces;j++){
-			v += weights[p1][list[j]];
+			v += weights.piece_pair[p1][list[j]];
 		}
 	}
 	return v / eval_scale;
@@ -99,7 +131,7 @@ void load_eval(){
 	FILE * fp = fopen("eval.bin", "rb");
 	bool fail = true;
 	if(fp != NULL){
-		fail = fread(&weights, sizeof(Array<Array<int, piece_index_dim>, piece_index_dim>), 1, fp) != 1;
+		fail = fread(&weights, sizeof(EvalTable<int>), 1, fp) != 1;
 		fclose(fp);
 	}
 	if(fail){
@@ -110,7 +142,7 @@ void load_eval(){
 
 #ifdef LEARN
 
-static void eval_feature(State& state, const PV& pv, std::vector<Array<int, piece_index_dim>>& grad, int d){
+static void eval_feature(State& state, const PV& pv, EvalTable<int>& grad, int d){
 	int ply = 0;
 	for(;pv[ply] != NullMove;ply++){
 		state.make_move(pv[ply]);
@@ -123,12 +155,13 @@ static void eval_feature(State& state, const PV& pv, std::vector<Array<int, piec
 		d = pos.turn_player() == White? d : -d;
 		int n_pieces;
 		const Array<int, 32>& list = state.get_piece_list(&n_pieces);
+		//piece pair
 		for(int i=0;i<n_pieces;i++){
 			const int p1 =list[i];
 			for(int j=i;j<n_pieces;j++){
 				const int p2 = list[j];
-				grad[p1][p2] += d;
-				grad[p2][p1] += d;
+				grad.piece_pair[p1][p2] += d;
+				grad.piece_pair[p2][p1] += d;
 			}
 		}
 	}while(false);
@@ -137,7 +170,8 @@ static void eval_feature(State& state, const PV& pv, std::vector<Array<int, piec
 	}
 }
 
-static bool learn_one(Searcher& searcher, State& state, Move bestmove, std::mt19937& mt, bool* mated, std::vector<Array<int, piece_index_dim>>& grad){
+static bool learn_one(Searcher& searcher, State& state, Move bestmove, std::mt19937& mt, bool* mated,
+	EvalTable<int>& grad){
 	PV good_pv, bad_pv;
 	//search subtree of bestmove
 	state.make_move(bestmove);
@@ -178,48 +212,35 @@ static bool learn_one(Searcher& searcher, State& state, Move bestmove, std::mt19
 		eval_feature(state, good_pv, grad, grad_scale * cnt);
 		state.unmake_move();
 		//update params
-		for(int i=0;i<piece_index_dim;i++){
-			for(int j=0;j<piece_index_dim;j++){
-				weights[i][j] += grad[i][j] / cnt;
-				grad[i][j] = 0;
-			}
-		}
+		for_each_table(weights, grad, [=](int& w, int& g){
+			w += g / cnt;
+			g = 0;
+		});
 	}
 	return cnt == 0;
 }
 
 void learn_eval(std::vector<Record>& records){
 	//init evaluation table
-	for(int i=0;i<piece_index_dim;i++){
-		for(int j=0;j<piece_index_dim;j++){
-			weights[i][j] = 0;
-		}
-	}
+	weights.clear();
 	for(Piece p = PassedPawn; p != PieceDim; p++){
 		for(Square sq = 0; sq < NSquare; sq++){
 			if((p == Pawn || p == PassedPawn) && (sq < 8 || sq >=56))continue;
 			int id = piece_index<false>(p, sq, White);
 			int id_rev = piece_index<true>(p, sq, White);
 			int v = (p == PassedPawn? PawnValue : material_value[p]) * eval_scale;
-			weights[id][id] = v;
-			weights[id_rev][id_rev] = -v;
+			weights.piece_pair[id][id] = v;
+			weights.piece_pair[id_rev][id_rev] = -v;
 		}
-	}
-	if(records.size() < 10000){
-		std::cout << "Data set is too small !" << std::endl;
-		return;
 	}
 	std::cout << "learning start" << std::endl;
 	std::vector<Sample> training_set = get_training_set(records, 0);
 	std::mt19937 mt(0);
 	//training
-	std::vector<Array<int64_t, piece_index_dim>> weights_sum(piece_index_dim);
-	std::vector<Array<int, piece_index_dim>> grad(piece_index_dim);
-	for(int i=0;i<piece_index_dim;i++){
-		for(int j=0;j<piece_index_dim;j++){
-			weights_sum[i][j] = grad[i][j] = 0;
-		}
-	}
+	std::unique_ptr<EvalTable<int64_t>> weights_sum(new EvalTable<int64_t>);
+	std::unique_ptr<EvalTable<int>> grad(new EvalTable<int>);
+	weights_sum->clear();
+	grad->clear();
 	int hit_count = 0;
 	int mated_count = 0;
 	Searcher searcher;
@@ -229,36 +250,32 @@ void learn_eval(std::vector<Record>& records){
 	int cnt = 0;
 	int b = 0;
 	for(int i=0;i < training_set.size();i++){
-		if(i % 10000 == 0){
+		if(i % 50000 == 0){
 			std::cout << hit_count << " / " << i << " " <<mated_count << " " << timer.sec() << "[sec]" << std::endl;
 		}
 		Sample sample = training_set[i];
 		setup_leaning_position(state, records, sample);
 		//Online MMTO
 		bool mated = false;
-		bool ok = learn_one(searcher, state, records[sample.first][sample.second], mt, &mated, grad);
+		bool ok = learn_one(searcher, state, records[sample.first][sample.second], mt, &mated, *grad);
 		if(ok)hit_count++;
 		if(mated)mated_count++;
 		b++;
 		if(!ok || i + 1== training_set.size()){
-			for(int j=0;j<piece_index_dim; j++){
-				for(int k=0;k<piece_index_dim; k++){
-					weights_sum[j][k] += weights[j][k] * b;
-				}
-			}
+			for_each_table(*weights_sum, weights, [=](int64_t& x, int y){
+				x += b * y;
+			});
 			b = 0;
 		}
 		cnt++;
 	}
 	if(cnt != training_set.size())std::cout << "Invalid" << std::endl;
 	//averaging
-	for(int i=0;i<piece_index_dim; i++){
-		for(int j=0;j<piece_index_dim; j++){
-			weights[i][j] = weights_sum[i][j] / cnt;
-		}
-	}
+	(*weights_sum) /= cnt;
+	weights.clear();
+	weights += (*weights_sum);
 	FILE* fp = fopen("eval.bin", "wb");
-	fwrite(&weights, sizeof(Array<Array<int, piece_index_dim>, piece_index_dim>), 1, fp);
+	fwrite(&weights, sizeof(EvalTable<int>), 1, fp);
 	fclose(fp);
 }
 
