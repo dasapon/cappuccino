@@ -57,6 +57,9 @@ class Searcher{
 	HashTable hash_table;
 	PV pv_table[max_ply];
 	KillerMove killer[max_ply + 2];
+
+	int think_with_timer(State& state, int max_depth, bool print);
+	int think(State& state, int max_depth, PV& pv, bool print, bool wait_timer_stopping);
 public:
 	~Searcher(){
 		if(main_thread.joinable())main_thread.join();

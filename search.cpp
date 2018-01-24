@@ -14,6 +14,13 @@ int Searcher::think(State& state, int max_depth, bool print){
 }
 
 int Searcher::think(State& state, int max_depth, PV& pv, bool print){
+	return think(state, max_depth, pv, print, false);
+}
+int Searcher::think_with_timer(State& state, int max_depth, bool print){
+	PV pv;
+	return think(state, max_depth, pv, print, true);
+}
+int Searcher::think(State& state, int max_depth, PV& pv, bool print, bool wait_timer_stopping){
 	int ret = 0;
 	nodes = 0;
 	Timer timer;
@@ -41,12 +48,20 @@ int Searcher::think(State& state, int max_depth, PV& pv, bool print){
 		}
 		if(std::abs(ret) >= MateValue || abort)break;
 	}
+	if(wait_timer_stopping){
+		while(!abort){
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		}
+	}
 	//bestmove
 	if(print){
+
 		if(pv[0] != NullMove){
 			std::cout << "bestmove " << pv[0].to_lan();
-			if(pv[1] != NullMove)
-				std::cout << " ponder " << pv[1].to_lan() << std::endl;
+			if(pv[1] != NullMove){
+				std::cout << " ponder " << pv[1].to_lan();
+			}
+			std::cout << std::endl;
 		}
 		else{
 			std::cout << "bestmove resign"<<std::endl;
@@ -60,7 +75,7 @@ void Searcher::go(State& state, uint64_t time, uint64_t inc, bool ponder_or_infi
 	abort = false;
 	timer_start(time, inc, ponder_or_infinite);
 	main_thread = std::thread([&](){
-		think(std::ref(state), 32, true);
+		think_with_timer(std::ref(state), 32, true);
 	});
 }
 
@@ -241,7 +256,6 @@ void Searcher::timer_start(uint64_t t, uint64_t i, bool ponder_or_infinite){
 	uint64_t opt = t / 24;
 	Timer timer;
 	search_start = timer;
-	std::cout << "info string " << t << "," << i << "," << opt << std::endl;
 	timer_thread = std::thread([&](uint64_t time, uint64_t inc, uint64_t optimum){
 		while(true){
 			std::this_thread::sleep_for(std::chrono::milliseconds(10));
