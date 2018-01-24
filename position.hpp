@@ -20,7 +20,6 @@ class Position{
 	Player turn;
 	Array<Array<bool, PlayerDim>, CastlingFlagDim> castling_flags;
 	BitBoard enpassant_bb;
-	BitBoard get_bb(Player turn, Piece piece)const {return occupied[turn] & pieces[piece];}
 	void xor_piece(Player turn, Piece piece, Square sq);
 	template<Piece piece>
 	int generate_piece_moves(Array<Move, MaxLegalMove>&, int idx, const BitBoard target)const;
@@ -31,6 +30,13 @@ class Position{
 	BitBoard attackers(Player turn, Square sq)const;
 	int see_sub(Player side, Square sq, BitBoard all, BitBoard ignored, int hanged)const;
 public:
+	BitBoard get_bb(Player turn, Piece piece)const {return occupied[turn] & pieces[piece];}
+	bool pawn_ending()const{
+		return all_bb == (occupied[Pawn] | occupied[King]);
+	}
+	Square king_square(Player p)const{
+		return king_sq[p];
+	}
 	bool is_attacked(Player p, Square sq)const;
 	Piece least_valuable_attacker(Player p, Square sq)const;
 	static void init_hash_seed();

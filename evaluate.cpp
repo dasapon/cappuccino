@@ -119,6 +119,10 @@ int Position::endgame_eval()const{
 		if(more_than_one(pieces[Knight] | pieces[Bishop])){
 			return 0;
 		}
+		//K+B vs K+P
+		if(pieces[Bishop] != 0 && pieces[Pawn] != 0){
+			return 0;
+		}
 		//K+R vs K+R
 		if(more_than_one(pieces[Rook]))return 0;
 		//K+Q vs K+Q
@@ -251,7 +255,7 @@ void learn_eval(std::vector<Record>& records){
 	int b = 0;
 	for(int i=0;i < training_set.size();i++){
 		if(i % 50000 == 0){
-			std::cout << hit_count << " / " << i << " " <<mated_count << " " << timer.sec() << "[sec]" << std::endl;
+			std::cout << hit_count << " / " << i << " " << mated_count <<  " " << timer.sec() << "[sec]" << std::endl;
 		}
 		Sample sample = training_set[i];
 		setup_leaning_position(state, records, sample);
@@ -265,9 +269,9 @@ void learn_eval(std::vector<Record>& records){
 			for_each_table(*weights_sum, weights, [=](int64_t& x, int y){
 				x += b * y;
 			});
+			cnt+=b;
 			b = 0;
 		}
-		cnt++;
 	}
 	if(cnt != training_set.size())std::cout << "Invalid" << std::endl;
 	//averaging
