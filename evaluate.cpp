@@ -199,13 +199,14 @@ static bool learn_one(Searcher& searcher, State& state, Move bestmove, std::mt19
 	}
 	int selected = 0;
 	int cnt = 0;
+	const int alpha = good_v - 10;
 	const int grad_scale = (state.pos().turn_player() == White? eval_scale : -eval_scale) / 8;
 	for(int i=0;i<n_moves;i++){
-		if(mt() % (n_moves - i) >= 16 - selected)continue;
+		if(mt() % (n_moves - i) >= 8 - selected)continue;
 		selected++;
 		state.make_move(moves[i]);
 		int bad_v = -searcher.think(state, 2, bad_pv, false);
-		if(bad_v >= good_v && std::abs(bad_v) < MateValue){
+		if(bad_v > alpha && std::abs(bad_v) < MateValue){
 			cnt++;
 			eval_feature(state, bad_pv, grad, -grad_scale);
 		}
