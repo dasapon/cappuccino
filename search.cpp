@@ -2,6 +2,9 @@
 #include "search.hpp"
 #include "evaluate.hpp"
 
+static Array<int, 7> aspiration_window({
+	Pawn / 2, Pawn / 2, Pawn, Pawn * 2, Pawn * 3, Pawn * 5, MateValue * 2,
+});
 static int futility_margin(int depth){
 	if(depth > 2 * depth_scale)return MateValue * 2;
 	else return KnightValue;
@@ -41,9 +44,25 @@ int Searcher::think(State& state, int max_depth, PV& pv, bool print, bool wait_t
 		std::cout << std::endl;
 	}
 	for(int depth = 1; depth <= max_depth; depth++){
-		int v = search(state, -MateValue, MateValue, depth * depth_scale, 0);
-		if(v > INT_MIN)ret = v;
-		pv = pv_table[0];
+		int alpha = -MateValue, beta = MateValue;
+		int low_count = 0, high_count = 0;
+		if(depth > 1){
+			alpha = ret - aspiration_window[0];
+			beta = ret + aspiration_window[0];
+		}
+		while(true){
+			int v = search(state, alpha, beta, depth * depth_scale, 0);
+			pv = pv_table[0];
+			if(v > INT_MIN)ret = v;
+			else break;
+			if(std::abs(v) >= MateValue || (v > alpha && v < beta))break;
+			if(v <= alpha){//fail low
+				alpha = std::max<int>(-MateValue, v - aspiration_window[low_count++]);
+			}
+			if(v >= beta){//fail high
+				beta = std::min<int>(MateValue, v + aspiration_window[high_count++]);
+			}
+		}
 		//print info
 		if(print){
 			std::cout << "info depth " << depth;
