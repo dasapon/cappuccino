@@ -28,6 +28,18 @@ int Searcher::think(State& state, int max_depth, PV& pv, bool print, bool wait_t
 	killer[0].clear();
 	killer[1].clear();
 	pv_table[0][0] = NullMove;
+	//show move probability
+	if(print){
+		MoveOrdering move_ordering(state, NullMove, killer[0], true, false);
+		std::cout << "info string moves";
+		for(int i=0;i<4;i++){
+			float score;
+			Move move = move_ordering.next(&score);
+			if(move == NullMove)break;
+			std::cout << "(" << move.to_lan() <<", "<< score << "), ";
+		}
+		std::cout << std::endl;
+	}
 	for(int depth = 1; depth <= max_depth; depth++){
 		int v = search(state, -MateValue, MateValue, depth * depth_scale, 0);
 		if(v > INT_MIN)ret = v;
@@ -55,7 +67,6 @@ int Searcher::think(State& state, int max_depth, PV& pv, bool print, bool wait_t
 	}
 	//bestmove
 	if(print){
-
 		if(pv[0] != NullMove){
 			std::cout << "bestmove " << pv[0].to_lan();
 			if(pv[1] != NullMove){
