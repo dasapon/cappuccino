@@ -176,7 +176,7 @@ int Searcher::search(State& state, int alpha, int beta, int depth, int ply){
 		}
 		int v;
 		if(move_count == 1){
-			v = -search_w(state, -beta, -alpha, depth - depth_scale, ply + 1);
+			v = -search_w(state, -beta, -alpha, depth - consume, ply + 1);
 		}
 		else {
 			v = -search_w(state, -alpha-1, -alpha, depth - consume, ply + 1);
