@@ -14,13 +14,18 @@ MoveOrdering::MoveOrdering(const State& state, Move hash_move, const KillerMove&
 		n_moves = pos.generate_unimportant_moves(moves, n_moves);
 		float max_score = -FLT_MAX;
 		int hash_move_idx = -1;
+		auto score = pos.turn_player() == Black? [](const State& st, Move move){
+			return move_score<Black>(st, move);
+		} : [](const State& st, Move move){
+			return move_score<White>(st, move);
+		};
 		for(int i=0;i<n_moves;i++){
 			if(pos.is_suicide_move(moves[i])){
 				moves[i--] = moves[--n_moves];
 				continue;
 			}
 			if(moves[i] == hash_move)hash_move_idx = i;
-			scores[i] = move_score(state, moves[i]);
+			scores[i] = score(state, moves[i]);
 			max_score = std::max(scores[i], max_score);
 		}
 		calculate_probability(n_moves, moves, scores, max_score);
@@ -88,6 +93,11 @@ Move MoveOrdering::next(float* score){
 	while(true){
 		if(idx >= n_moves){
 			const Position& pos = state.pos();
+			auto score = pos.turn_player() == Black? [](const State& st, Move move){
+				return move_score<Black>(st, move);
+			} : [](const State& st, Move move){
+				return move_score<White>(st, move);
+			};
 			switch(status){
 			case Hash:
 				n_moves = pos.generate_important_moves(moves, n_moves);
@@ -98,7 +108,7 @@ Move MoveOrdering::next(float* score){
 				}
 				for(int i=idx;i<n_moves;i++){
 					if(moves[i] == hash_move || pos.is_suicide_move(moves[i]))moves[i--] = moves[--n_moves];
-					else scores[i] = move_score(state, moves[i]);
+					else scores[i] = score(state, moves[i]);
 				}
 				insertion_sort(idx, n_moves);
 				status = Important;
@@ -110,10 +120,10 @@ Move MoveOrdering::next(float* score){
 					if(m == hash_move || m == killer[0] || m == killer[1]
 						|| pos.is_suicide_move(moves[i]))moves[i--] = moves[--n_moves];
 					//futility pruning
-					//By pruning here, move scoring is omitted.
+					//Pruning here, and move scoring is omitted.
 					else if(do_fp && !pos.is_move_check(moves[i]))moves[i--] = moves[--n_moves];
 					else{
-						scores[i] = move_score(state, moves[i]);
+						scores[i] = score(state, moves[i]);
 					}
 				}
 				insertion_sort(idx, n_moves);

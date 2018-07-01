@@ -202,59 +202,42 @@ bool Position::immediately_draw()const{
 	return n == 2 || (n == 3 && (pieces[Knight] | pieces[Bishop]) != 0);
 }
 
-static const sheena::Array<int, PieceDim> piece_index_table({
-	passed_pawn_index, pawn_index, knight_index, bishop_index, 
+static const sheena::Array<int32_t, PieceDim> piece_index_table({
+	0, pawn_index, knight_index, bishop_index, 
 	rook_index, queen_index, king_index,
 });
 
-static const sheena::Array<int, PieceDim> enemy_piece_index_table({
-	enemy_passed_pawn_index, enemy_pawn_index, enemy_knight_index, enemy_bishop_index, 
+static const sheena::Array<int32_t, PieceDim> enemy_piece_index_table({
+	0, enemy_pawn_index, enemy_knight_index, enemy_bishop_index, 
 	enemy_rook_index, enemy_queen_index, enemy_king_index,
 });
 
-template <bool is_enemy>
-int piece_index(Piece p, Square sq, Player side){
-	if(is_enemy)return enemy_piece_index_table[p] + (side == White? sq : wb_reverse(sq));
-	else return piece_index_table[p] + (side == White? sq : wb_reverse(sq));
+sheena::Array<PieceListIndex, NSquare> PieceListIndex::sq_index;
+sheena::Array2d<PieceListIndex, PieceDim, PlayerDim> PieceListIndex::piece_index;
+void PieceListIndex::init_table(){
+	for(Square sq = 0; sq < NSquare; sq++){
+		sq_index[sq].w32[0] = static_cast<int64_t>(sq);
+		sq_index[sq].w32[1] = static_cast<int64_t>(wb_reverse(sq));
+	}
+	for(Piece p = Pawn; p < PieceDim; p++){
+		piece_index[p][White].w32[0] = piece_index[p][Black].w32[1] = piece_index_table[p];
+		piece_index[p][White].w32[1] = piece_index[p][Black].w32[0] = enemy_piece_index_table[p];
+	}
 }
-template int piece_index<true>(Piece p, Square sq, Player side);
-template int piece_index<false>(Piece p, Square sq, Player side);
-int Position::piece_list(sheena::Array<int, 32>& list)const{
-	int ret = 0;
-	for(Piece p = Knight;p < PieceDim;p++){
-		BitBoard bb = get_bb(turn, p);
+
+void Position::piece_list(PieceList& pl)const{
+	uint32_t i = 0;
+	for(Piece p = Pawn;p < PieceDim;p++){
+		BitBoard bb = get_bb(Black, p);
 		while(bb){
 			Square sq = pop_one(bb);
-			list[ret++] = piece_index<false>(p, sq, turn);
+			pl.list[i++] = PieceListIndex(Black, p, sq);
 		}
-		bb = get_bb(opponent(turn), p);
+		bb = get_bb(White, p);
 		while(bb){
 			Square sq = pop_one(bb);
-			list[ret++] = piece_index<true>(p, sq, turn);
+			pl.list[i++] = PieceListIndex(White, p, sq);
 		}
 	}
-	//pawns and passed pawns
-	BitBoard bb = get_bb(turn, Pawn);
-	BitBoard enemy_pawns = get_bb(opponent(turn), Pawn);
-	while(bb){
-		Square sq = pop_one(bb);
-		if(enemy_pawns & forward3_table[turn][sq])
-			list[ret++] = piece_index<false>(Pawn, sq, turn);
-		else
-			list[ret++] = piece_index<false>(PassedPawn, sq, turn);
-	}
-	bb = enemy_pawns;
-	enemy_pawns = get_bb(turn, Pawn);
-	while(bb){
-		Square sq = pop_one(bb);
-		if(enemy_pawns & forward3_table[opponent(turn)][sq])
-			list[ret++] = piece_index<true>(Pawn, sq, turn);
-		else
-			list[ret++] = piece_index<true>(PassedPawn, sq, turn);
-	}
-	if(ret < 32){
-		list[ret] = piece_none_index + 31 - ret;
-		ret++;
-	}
-	return ret;
+	pl.size = i;
 }

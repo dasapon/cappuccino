@@ -85,9 +85,8 @@ void uci_loop(){
 			std::cout << state.draw() << std::endl;
 		}
 		else if(cmds[0] == "piece_list"){
-			int n;
-			const sheena::Array<int, 32>& list = state.get_piece_list(&n);
-			for(int i=0;i<n;i++)std::cout << list[i] << " ";
+			const PieceList& pl = state.piece_list();
+			for(int i=0;i<pl.size;i++)std::cout << pl.list[i].index<White>() << " ";
 			std::cout << std::endl;
 		}
 	}

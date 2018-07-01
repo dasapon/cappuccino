@@ -4,6 +4,12 @@
 
 
 extern const FEN startpos;
+
+struct PieceList{
+	uint32_t size;
+	sheena::Array<PieceListIndex, 32> list;
+};
+
 class Position{
 	enum CastlingFlag{
 		Short, Long, CastlingFlagDim,
@@ -18,7 +24,7 @@ class Position{
 	sheena::Array<Square, PlayerDim> king_sq;
 	int half_move_counter;
 	Player turn;
-	sheena::Array<sheena::Array<bool, PlayerDim>, CastlingFlagDim> castling_flags;
+	sheena::Array2d<bool, CastlingFlagDim, PlayerDim> castling_flags;
 	BitBoard enpassant_bb;
 	void xor_piece(Player turn, Piece piece, Square sq);
 	template<Piece piece>
@@ -43,7 +49,7 @@ public:
 	BitBoard empty_bb()const{return ~(occupied[White] | occupied[Black]);}
 	int generate_important_moves(sheena::Array<Move, MaxLegalMove>&, int)const;
 	int generate_unimportant_moves(sheena::Array<Move, MaxLegalMove>&, int)const;
-	int piece_list(sheena::Array<int, 32>&)const;
+	void piece_list(PieceList&)const;
 	void make_move(Move move);
 	void operator=(const Position& pos){memcpy(this,&pos,sizeof(Position));}
 	void load_fen(const FEN& fen);

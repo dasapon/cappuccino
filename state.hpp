@@ -7,24 +7,22 @@ class State{
 	class CurState{
 	public:
 		Position pos;
-		sheena::Array<int, 32>piece_list;
+		PieceList piece_list;
 		Move last_move;
-		int n_pieces;
 		CurState(){};
 		CurState(const Position& pos):pos(pos), last_move(NullMove){
-			n_pieces = pos.piece_list(piece_list);
+			pos.piece_list(piece_list);
 		}
 		void set(const Position& pos, Move move){
 			this->pos = pos;
 			this->pos.make_move(move);
 			last_move = move;
-			n_pieces = this->pos.piece_list(piece_list);
+			this->pos.piece_list(piece_list);
 		}
 		void operator=(const CurState& cs){
 			pos = cs.pos;
 			piece_list = cs.piece_list;
 			last_move = cs.last_move;
-			n_pieces = cs.n_pieces;
 		}
 	};
 	std::vector<CurState> history;
@@ -35,12 +33,11 @@ public:
 		for(int i=0;i<ply;i++)history[i] = state.history[i];
 	}
 	const Position& pos()const{return history[ply].pos;}
-	const sheena::Array<int, 32>& get_piece_list(int* n)const{
-		*n = history[ply].n_pieces;
+	const PieceList& piece_list()const{
 		return history[ply].piece_list;
 	}
 	float progress()const{
-		return 1.0f - (history[ply].n_pieces - 2.0f) / 30.0f;
+		return 1.0f - (history[ply].piece_list.size - 2.0f) / 30.0f;
 	}
 	Move previous_move(int i)const{
 		if(ply < i)return NullMove;

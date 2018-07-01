@@ -29,7 +29,6 @@ inline void operator++(Player& p, int){
 }
 enum Piece{
 	Empty, Pawn, Knight, Bishop, Rook, Queen, King, PieceDim,
-	PassedPawn = 0,
 };
 
 inline void operator^=(Piece& p1, Piece p2){
@@ -93,29 +92,49 @@ enum{
 constexpr int depth_scale = 8;
 extern const sheena::Array<int, PieceDim> material_value;
 
-enum {
-	passed_pawn_index = -8,
-	pawn_index = passed_pawn_index + 64 - 16,
+enum : int32_t{
+	pawn_index = -8,
 	knight_index = pawn_index + 64 - 8,
 	bishop_index = knight_index + 64,
 	rook_index = bishop_index + 64,
 	queen_index = rook_index + 64,
 	king_index = queen_index + 64,
-	friend_piece_index_dim = king_index + 64,
-	enemy_passed_pawn_index = friend_piece_index_dim - 8,
-	enemy_pawn_index = enemy_passed_pawn_index + 64 - 16,
+	friend_piece_list_dim = king_index + 64,
+	enemy_pawn_index = friend_piece_list_dim - 8,
 	enemy_knight_index = enemy_pawn_index + 64 - 8,
 	enemy_bishop_index = enemy_knight_index + 64,
 	enemy_rook_index = enemy_bishop_index + 64,
 	enemy_queen_index = enemy_rook_index + 64,
 	enemy_king_index = enemy_queen_index + 64,
-	piece_none_index = enemy_king_index + 64,
-	piece_index_dim = piece_none_index + 32,
+	piece_list_dim = enemy_king_index + 64,
 };
 
-template <bool is_enemy>
-extern int piece_index(Piece p, Square sq, Player side);
+class PieceListIndex{
+	static sheena::Array<PieceListIndex, NSquare> sq_index;
+	static sheena::Array2d<PieceListIndex, PieceDim, PlayerDim> piece_index;
+	//
+	union{
+		int32_t w32[2];
+		int64_t w64;
+	};
+public:
+	static void init_table();
+	PieceListIndex():w64(0){};
+	PieceListIndex(const PieceListIndex& pli):w64(pli.w64){};
+	void operator=(const PieceListIndex& rhs){
+		w64 = rhs.w64;
+	}
+	PieceListIndex(Player owner, Piece piece, Square sq){
+		w64 = piece_index[piece][owner].w64 + sq_index[sq].w64;
+	}
+	template<Player side>
+	int index()const{
+		return w32[side];
+	}
+};
 
-using Record = std::vector<Move>;
+struct Record : public std::vector<Move>{
+	int result;
+};
+
 extern std::vector<std::string> split(std::string str);
-extern std::vector<Record> read_pgn(std::string file_name, int elo);
