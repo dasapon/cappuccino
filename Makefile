@@ -27,6 +27,10 @@ $(BIN_DIR)/$(LEXE): $(LOBJECTS)
 	if [ ! -d $(BIN_DIR) ] ; then mkdir -p $(BIN_DIR); fi
 	$(CC) $(OPTIONS) -DLEARN -o $(BIN_DIR)/$(LEXE) $(LOBJECTS) $(LIBRARIES)
 	
+.PHONY:test
+test: release learn
+	$(BIN_DIR)/$(EXE) unit_test
+
 .PHONY:clean
 clean:
 	rm -f $(OBJ_DIR)/*.o
