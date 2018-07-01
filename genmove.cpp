@@ -2,7 +2,7 @@
 #include "bitboard.hpp"
 
 template<Piece piece>
-int Position::generate_piece_moves(Array<Move, MaxLegalMove>& moves, int idx, BitBoard target)const{
+int Position::generate_piece_moves(sheena::Array<Move, MaxLegalMove>& moves, int idx, BitBoard target)const{
 	BitBoard from_bb = occupied[turn] & pieces[piece];
 	while(from_bb){
 		Square from = pop_one(from_bb);
@@ -15,7 +15,7 @@ int Position::generate_piece_moves(Array<Move, MaxLegalMove>& moves, int idx, Bi
 	return idx;
 }
 template<Player us>
-int Position::generate_pawn_moves(Array<Move, MaxLegalMove>& moves, int idx, BitBoard target)const{
+int Position::generate_pawn_moves(sheena::Array<Move, MaxLegalMove>& moves, int idx, BitBoard target)const{
 	assert(us == turn);
 	const BitBoard enemy_pieces = occupied[opponent(us)];
 	constexpr BitBoard promotion_squares = us ==White? RANK_8 : RANK_1;
@@ -91,7 +91,7 @@ int Position::generate_pawn_moves(Array<Move, MaxLegalMove>& moves, int idx, Bit
 	}
 	return idx;
 }
-int Position::generate_important_moves(Array<Move, MaxLegalMove>& moves,int n_moves)const{
+int Position::generate_important_moves(sheena::Array<Move, MaxLegalMove>& moves,int n_moves)const{
 	if(check()){
 		//Generate all moves when check
 		Square ksq = king_sq[turn];
@@ -142,7 +142,7 @@ int Position::generate_important_moves(Array<Move, MaxLegalMove>& moves,int n_mo
 	}
 	return n_moves;
 }
-int Position::generate_unimportant_moves(Array<Move, MaxLegalMove>& moves, int n_moves)const{
+int Position::generate_unimportant_moves(sheena::Array<Move, MaxLegalMove>& moves, int n_moves)const{
 	if(check())return n_moves;
 	BitBoard target = ~all_bb;
 	n_moves = generate_piece_moves<Knight>(moves, n_moves, target);

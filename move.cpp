@@ -142,7 +142,7 @@ int Position::see(Move move)const{
 }
 
 Move::Move(const Position& pos, std::string str){
-	Array<Move, MaxLegalMove> moves;
+	sheena::Array<Move, MaxLegalMove> moves;
 	int n = pos.generate_important_moves(moves, 0);
 	n = pos.generate_unimportant_moves(moves, n);
 	for(int i=0;i<n;i++){
@@ -154,7 +154,7 @@ Move::Move(const Position& pos, std::string str){
 	std::cerr << "invalid move " << str << std::endl;
 }
 
-static std::string to_san(int idx, const Position& pos, Array<Move, MaxLegalMove>& moves, int n_moves){
+static std::string to_san(int idx, const Position& pos, sheena::Array<Move, MaxLegalMove>& moves, int n_moves){
 	Move move = moves[idx];
 	const Square to = move.to();
 	const Square from = move.from();
@@ -205,7 +205,7 @@ static std::string to_san(int idx, const Position& pos, Array<Move, MaxLegalMove
 	if(pos.is_move_check(move)){
 		Position next(pos);
 		next.make_move(move);
-		Array<Move, MaxLegalMove> move_next;
+		sheena::Array<Move, MaxLegalMove> move_next;
 		int n_next_moves = next.generate_important_moves(move_next, 0);
 		bool mate = true;
 		for(int i=0;i<n_next_moves;i++){
@@ -221,7 +221,7 @@ static std::string to_san(int idx, const Position& pos, Array<Move, MaxLegalMove
 
 Move san2move(const Position& pos, std::string str){
 	//move generation
-	Array<Move, MaxLegalMove> moves;
+	sheena::Array<Move, MaxLegalMove> moves;
 	int n_moves = pos.generate_important_moves(moves, 0);
 	n_moves = pos.generate_unimportant_moves(moves, n_moves);
 	for(int i=0;i<n_moves;i++)if(pos.is_suicide_move(moves[i]))moves[i--] = moves[--n_moves];

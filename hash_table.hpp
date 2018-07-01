@@ -56,31 +56,30 @@ public:
 	uint64_t generation()const{
 		return word2 & 0xf;
 	}
+	void clear(){
+		word1 = word2 = 0;
+	}
 };
 
 class HashTable{
-	HashEntry * table;
+	sheena::ArrayAlloc<HashEntry> table;
 	size_t mask;
 	uint64_t generation;
 public:
 	void set_size(size_t mb){
 		while(mb & (mb - 1))mb &= mb - 1;
 		if(mb == 0)std::cout << "Invalid set. hash size must not be 0." << std::endl;
-		if(table != nullptr)delete[] table;
 		mask = mb * (1 << 20) / sizeof(HashEntry) - 1;
-		table = new HashEntry[mask + 1];
+		table.resize(mask + 1);
 	}
 	void clear(){
-		memset(table, 0, sizeof(HashEntry) * (mask + 1));
+		for(int i=0;i<table.size();i++)table[i].clear();
 		generation = 1;
 	}
 	void new_gen(){generation = (generation + 1) & 0xf;}
-	HashTable():table(nullptr),generation(0){
+	HashTable():generation(0){
 		set_size(32);
 		clear();
-	}
-	~HashTable(){
-		if(table != nullptr)delete[] table;
 	}
 	bool probe(const Position& pos, HashEntry& entry)const{
 		uint64_t key = pos.key();

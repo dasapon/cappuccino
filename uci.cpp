@@ -44,7 +44,7 @@ void uci_loop(){
 			state.set_up(cmds);
 		}
 		else if(cmds[0] == "go"){
-			Array<uint64_t, PlayerDim> time({0,0}), inc({0,0});
+			sheena::Array<uint64_t, PlayerDim> time({0,0}), inc({0,0});
 			bool ponder_or_infinite = false;
 			for(int i=1;i<cmds.size();i++){
 				if(cmds[i] == "ponder" || cmds[i] == "infinite"){
@@ -66,7 +66,7 @@ void uci_loop(){
 		}
 		//debug commands
 		else if(cmds[0] == "genmove"){
-			Array<Move, MaxLegalMove> moves;
+			sheena::Array<Move, MaxLegalMove> moves;
 			const Position& pos = state.pos();
 			int n = pos.generate_important_moves(moves, 0);
 			n = pos.generate_unimportant_moves(moves, n);
@@ -86,7 +86,7 @@ void uci_loop(){
 		}
 		else if(cmds[0] == "piece_list"){
 			int n;
-			const Array<int, 32>& list = state.get_piece_list(&n);
+			const sheena::Array<int, 32>& list = state.get_piece_list(&n);
 			for(int i=0;i<n;i++)std::cout << list[i] << " ";
 			std::cout << std::endl;
 		}

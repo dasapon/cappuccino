@@ -3,7 +3,7 @@
 
 
 const Square Position::rook_ini[PlayerDim][CastlingFlagDim] = {{7, 0}, {63, 56}};
-Array<Array<Array<uint64_t, NSquare>, PieceDim>, PlayerDim> Position::hash_seed;
+sheena::Array3d<uint64_t, PlayerDim, PieceDim, NSquare> Position::hash_seed;
 const FEN startpos({"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR","w","KQkq","-","0","1"});
 void Position::xor_piece(Player us, Piece piece, Square sq){
 	assert(board[sq] == piece || board[sq] == Empty);
@@ -202,12 +202,12 @@ bool Position::immediately_draw()const{
 	return n == 2 || (n == 3 && (pieces[Knight] | pieces[Bishop]) != 0);
 }
 
-static const Array<int, PieceDim> piece_index_table({
+static const sheena::Array<int, PieceDim> piece_index_table({
 	passed_pawn_index, pawn_index, knight_index, bishop_index, 
 	rook_index, queen_index, king_index,
 });
 
-static const Array<int, PieceDim> enemy_piece_index_table({
+static const sheena::Array<int, PieceDim> enemy_piece_index_table({
 	enemy_passed_pawn_index, enemy_pawn_index, enemy_knight_index, enemy_bishop_index, 
 	enemy_rook_index, enemy_queen_index, enemy_king_index,
 });
@@ -219,7 +219,7 @@ int piece_index(Piece p, Square sq, Player side){
 }
 template int piece_index<true>(Piece p, Square sq, Player side);
 template int piece_index<false>(Piece p, Square sq, Player side);
-int Position::piece_list(Array<int, 32>& list)const{
+int Position::piece_list(sheena::Array<int, 32>& list)const{
 	int ret = 0;
 	for(Piece p = Knight;p < PieceDim;p++){
 		BitBoard bb = get_bb(turn, p);

@@ -14,32 +14,7 @@
 #include <thread>
 #include <random>
 
-template<typename Ty, size_t Size>
-class Array{
-	Ty array_[Size];
-	void assert_(int idx)const{assert(idx >= 0);assert(idx < Size);}
-public:
-	Array(){}
-	explicit Array(const std::initializer_list<Ty> init){
-		auto itr = init.begin();
-		for(int i=0;i<Size && i < init.size();i++){
-			array_[i] = *itr;
-			itr++;
-		}
-	}
-	static size_t size(){return Size;}
-	Ty operator[](int idx)const{
-		assert_(idx);
-		return array_[idx];
-	}
-	Ty& operator[](int idx){
-		assert_(idx);
-		return array_[idx];
-	}
-	void operator=(const Array<Ty, Size> & a){
-		for(int i=0;i<Size;i++)(*this)[i] = a[i];
-	}
-};
+#include "sheena/sheena.hpp"
 
 using BitBoard = uint64_t;
 using Square = int32_t;
@@ -96,7 +71,7 @@ inline std::string square_string(Square sq){
 constexpr int MaxLegalMove = 256;
 
 
-using FEN = Array<std::string, 6>;
+using FEN = sheena::Array<std::string, 6>;
 
 class Position;
 extern uint64_t perft(Position&, int);
@@ -116,7 +91,7 @@ enum{
 	QueenValue = 1000,
 };
 constexpr int depth_scale = 8;
-extern const Array<int, PieceDim> material_value;
+extern const sheena::Array<int, PieceDim> material_value;
 
 enum {
 	passed_pawn_index = -8,

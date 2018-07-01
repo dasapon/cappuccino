@@ -7,7 +7,7 @@ class State{
 	class CurState{
 	public:
 		Position pos;
-		Array<int, 32>piece_list;
+		sheena::Array<int, 32>piece_list;
 		Move last_move;
 		int n_pieces;
 		CurState(){};
@@ -35,7 +35,7 @@ public:
 		for(int i=0;i<ply;i++)history[i] = state.history[i];
 	}
 	const Position& pos()const{return history[ply].pos;}
-	const Array<int, 32>& get_piece_list(int* n)const{
+	const sheena::Array<int, 32>& get_piece_list(int* n)const{
 		*n = history[ply].n_pieces;
 		return history[ply].piece_list;
 	}

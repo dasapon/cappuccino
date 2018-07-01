@@ -9,22 +9,22 @@ class Position{
 		Short, Long, CastlingFlagDim,
 	};
 	static const Square rook_ini[PlayerDim][CastlingFlagDim];
-	static Array<Array<Array<uint64_t, NSquare>, PieceDim>, PlayerDim> hash_seed;
-	Array<BitBoard, PlayerDim> occupied;
-	Array<BitBoard, PieceDim> pieces;
+	static sheena::Array3d<uint64_t, PlayerDim, PieceDim, NSquare> hash_seed;
+	sheena::Array<BitBoard, PlayerDim> occupied;
+	sheena::Array<BitBoard, PieceDim> pieces;
 	BitBoard all_bb;
-	Array<Piece, NSquare> board;
+	sheena::Array<Piece, NSquare> board;
 	uint64_t hash_key;
-	Array<Square, PlayerDim> king_sq;
+	sheena::Array<Square, PlayerDim> king_sq;
 	int half_move_counter;
 	Player turn;
-	Array<Array<bool, PlayerDim>, CastlingFlagDim> castling_flags;
+	sheena::Array<sheena::Array<bool, PlayerDim>, CastlingFlagDim> castling_flags;
 	BitBoard enpassant_bb;
 	void xor_piece(Player turn, Piece piece, Square sq);
 	template<Piece piece>
-	int generate_piece_moves(Array<Move, MaxLegalMove>&, int idx, const BitBoard target)const;
+	int generate_piece_moves(sheena::Array<Move, MaxLegalMove>&, int idx, const BitBoard target)const;
 	template<Player turn>
-	int generate_pawn_moves(Array<Move, MaxLegalMove>&, int idx, BitBoard target)const;
+	int generate_pawn_moves(sheena::Array<Move, MaxLegalMove>&, int idx, BitBoard target)const;
 	bool is_attacked(Player p, Square sq, BitBoard customized_all, BitBoard ignored)const;
 	BitBoard least_valuable_attacker(Player p, Square sq, BitBoard customized_all, BitBoard ignored)const;
 	BitBoard attackers(Player turn, Square sq)const;
@@ -41,9 +41,9 @@ public:
 	Piece least_valuable_attacker(Player p, Square sq)const;
 	static void init_hash_seed();
 	BitBoard empty_bb()const{return ~(occupied[White] | occupied[Black]);}
-	int generate_important_moves(Array<Move, MaxLegalMove>&, int)const;
-	int generate_unimportant_moves(Array<Move, MaxLegalMove>&, int)const;
-	int piece_list(Array<int, 32>&)const;
+	int generate_important_moves(sheena::Array<Move, MaxLegalMove>&, int)const;
+	int generate_unimportant_moves(sheena::Array<Move, MaxLegalMove>&, int)const;
+	int piece_list(sheena::Array<int, 32>&)const;
 	void make_move(Move move);
 	void operator=(const Position& pos){memcpy(this,&pos,sizeof(Position));}
 	void load_fen(const FEN& fen);

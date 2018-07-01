@@ -2,7 +2,7 @@
 #include "search.hpp"
 #include "evaluate.hpp"
 
-static Array<int, 7> aspiration_window({
+static sheena::Array<int, 7> aspiration_window({
 	Pawn / 2, Pawn / 2, Pawn, Pawn * 2, Pawn * 3, Pawn * 5, MateValue * 2,
 });
 static int futility_margin(int depth){

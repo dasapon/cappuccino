@@ -2,7 +2,7 @@
 
 #include "cappuccino.hpp"
 
-using BitBoardTable = Array<BitBoard, 64>;
+using BitBoardTable = sheena::Array<BitBoard, 64>;
 
 constexpr BitBoard FILE_A = 0x0101010101010101ULL;
 constexpr BitBoard FILE_B = FILE_A << 1;
@@ -24,9 +24,9 @@ constexpr BitBoard RANK_8 = RANK_1 << 56;
 
 extern BitBoardTable knight_attack_table, king_attack_table;
 extern BitBoardTable rank_mask_table, file_mask_table, diag_mask_table, diag2_mask_table;
-extern Array<BitBoardTable, PlayerDim> pawn_attack_table;
-extern Array<BitBoardTable, NSquare> sandwiched_squares;
-extern Array<BitBoardTable, PlayerDim> forward3_table;
+extern sheena::Array<BitBoardTable, PlayerDim> pawn_attack_table;
+extern sheena::Array<BitBoardTable, NSquare> sandwiched_squares;
+extern sheena::Array<BitBoardTable, PlayerDim> forward3_table;
 
 inline Square bsf(BitBoard bb){
 #ifdef _WIN64

@@ -7,12 +7,12 @@
 
 constexpr int max_ply = 128;
 
-using PV = Array<Move, max_ply>;
+using PV = sheena::Array<Move, max_ply>;
 
 enum {
 	RPSDepth = 4 * depth_scale,
 };
-class KillerMove : public Array<Move, 2>{
+class KillerMove : public sheena::Array<Move, 2>{
 	public:
 	void update(Move m){
 		if((*this)[0] != m){
@@ -34,8 +34,8 @@ class MoveOrdering{
 	Status status;
 	int n_moves;
 	int idx;
-	Array<Move, MaxLegalMove> moves;
-	Array<float, MaxLegalMove> scores;
+	sheena::Array<Move, MaxLegalMove> moves;
+	sheena::Array<float, MaxLegalMove> scores;
 	const State& state;
 	Move hash_move;
 	KillerMove killer;

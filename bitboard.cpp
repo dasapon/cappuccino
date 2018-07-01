@@ -2,11 +2,11 @@
 
 BitBoardTable knight_attack_table, king_attack_table;
 BitBoardTable rank_mask_table, file_mask_table, diag_mask_table, diag2_mask_table;
-Array<BitBoardTable, PlayerDim> pawn_attack_table;
-Array<BitBoardTable, NSquare> sandwiched_squares;
-Array<BitBoardTable, PlayerDim> forward3_table;
+sheena::Array<BitBoardTable, PlayerDim> pawn_attack_table;
+sheena::Array<BitBoardTable, NSquare> sandwiched_squares;
+sheena::Array<BitBoardTable, PlayerDim> forward3_table;
 
-static Array<Array<BitBoard, 64>, 8> rank_diag_attack_table, file_attack_table;
+static sheena::Array2d<BitBoard, 8, 64> rank_diag_attack_table, file_attack_table;
 
 
 static inline BitBoard rank_diag_attack(Square sq, BitBoard occupied, BitBoard mask){

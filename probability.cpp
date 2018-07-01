@@ -1,4 +1,3 @@
-#include "simd.hpp"
 #include "probability.hpp"
 #include "time.hpp"
 #include "learn.hpp"
@@ -19,7 +18,7 @@ enum{
 	Dim,
 };
 
-using Weights = Array<Float4, Dim>;
+using Weights = sheena::Array<sheena::Float4, Dim>;
 
 static Weights weights;
 
@@ -36,17 +35,17 @@ void load_proabiblity(){
 }
 
 template<bool update>
-static void proce(int idx, Weights& w, Float4& d){
+static void proce(int idx, Weights& w, sheena::Float4& d){
 	if(update)w[idx] += d;
 	else d += w[idx];
 }
 
 template<bool update>
 static float proce(const State& state, Move move, Weights& w, float d){
-	Float4 flt4 = 0;
+	sheena::Float4 flt4 = 0;
 	const Position& pos = state.pos();
 	int n_pieces;
-	const Array<int, 32>& piece_list = state.get_piece_list(&n_pieces);
+	const sheena::Array<int, 32>& piece_list = state.get_piece_list(&n_pieces);
 	int see = pos.see(move);
 	bool check = pos.is_move_check(move);
 	Piece piece = move.piece();
@@ -54,7 +53,7 @@ static float proce(const State& state, Move move, Weights& w, float d){
 	const Player turn = pos.turn_player();
 	Square to = move.to();
 	Square from = move.from();
-	Float4 coefficients(1.0f, see / 256.0f, 2 * state.progress() - 1.0, capture != Empty? 1 : 0);
+	sheena::Float4 coefficients(1.0f, see / 256.0f, 2 * state.progress() - 1.0, capture != Empty? 1 : 0);
 	if(update)flt4 = coefficients * d;
 	//basic move features
 	if(see < 0)proce<update>(SeeMinus, w, flt4);
@@ -97,7 +96,7 @@ void calc_grad(const State& state, Move move, Weights& grad, float d){
 	proce<true>(state, move, grad, d);
 }
 
-void calculate_probability(int n,const Array<Move, MaxLegalMove>& moves, Array<float, MaxLegalMove>& scores, float max_score){
+void calculate_probability(int n,const sheena::Array<Move, MaxLegalMove>& moves, sheena::Array<float, MaxLegalMove>& scores, float max_score){
 	float sum = 0;
 	for(int i=0;i<n;i++){
 		scores[i] -= max_score;
@@ -111,7 +110,7 @@ void calculate_probability(int n,const Array<Move, MaxLegalMove>& moves, Array<f
 
 #ifdef LEARN
 
-static Array<Array<int, piece_index_dim>, friend_piece_index_dim> relation_index;
+static sheena::Array2d<int, friend_piece_index_dim, piece_index_dim> relation_index;
 static constexpr int relation_dim = 7 * 14 * 15 * 8;
 static void init_relation_table(){
 	for(Piece p = PassedPawn; p != PieceDim; p++){
@@ -141,8 +140,8 @@ static void clear(Weights& w){
 
 template <bool test>
 double learn_one(const State& state, Move best_move, Weights& grad){
-	Array<Move, MaxLegalMove> moves;
-	Array<float, MaxLegalMove> scores;
+	sheena::Array<Move, MaxLegalMove> moves;
+	sheena::Array<float, MaxLegalMove> scores;
 	const Position& pos = state.pos();
 	//calculate probability of all moves
 	int n = pos.generate_important_moves(moves, 0);
@@ -173,7 +172,7 @@ double learn_one(const State& state, Move best_move, Weights& grad){
 }
 
 //raw weights
-using LowDimWeights = Array<Float4, relation_dim * 4>;
+using LowDimWeights = sheena::Array<sheena::Float4, relation_dim * 4>;
 void learn_probability(std::vector<Record>& records){
 	if(records.size() < 10000){
 		std::cout << "Data set is too small !" << std::endl;
@@ -223,7 +222,7 @@ void learn_probability(std::vector<Record>& records){
 					}
 				}
 				//update function (AdaGrad)
-				auto update = [=](Float4& w, Float4& g, Float4& g2){
+				auto update = [=](sheena::Float4& w, sheena::Float4& g, sheena::Float4& g2){
 					//penalty
 					for(int i=0;i<4;i++){
 						if(w[i] > 0)g[i] += l1penalty;

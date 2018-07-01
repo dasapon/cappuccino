@@ -5,7 +5,7 @@
 
 constexpr int eval_scale = 256;
 
-const Array<int, NSquare> sweep_table({
+const sheena::Array<int, NSquare> sweep_table({
 	4, 4, 4, 4, 4, 4, 4, 4,
 	4, 3, 3, 3, 3, 3, 3, 4,
 	4, 3, 2, 2, 2, 2, 3, 4,
@@ -16,7 +16,7 @@ const Array<int, NSquare> sweep_table({
 	4, 4, 4, 4, 4, 4, 4, 4,
 });
 
-const Array<int, PieceDim> material_value({
+const sheena::Array<int, PieceDim> material_value({
 	0,
 	PawnValue,
 	KnightValue,
@@ -28,7 +28,7 @@ const Array<int, PieceDim> material_value({
 
 template<typename Ty>
 struct EvalTable{
-	Array<Array<Ty, piece_index_dim>, piece_index_dim> piece_pair;
+	sheena::Array<sheena::Array<Ty, piece_index_dim>, piece_index_dim> piece_pair;
 	template<typename T2>
 	void operator+=(const EvalTable<T2>& tbl){
 		for(int i=0;i<piece_index_dim;i++){
@@ -65,7 +65,7 @@ int evaluate(const State& state){
 	int endgame = pos.endgame_eval();
 	if(endgame != ValueINF)return endgame;
 	int n_pieces;
-	const Array<int, 32>& list = state.get_piece_list(&n_pieces);
+	const sheena::Array<int, 32>& list = state.get_piece_list(&n_pieces);
 	int v = 0;
 	//piece pair
 	for(int i=0;i<n_pieces;i++){
@@ -158,7 +158,7 @@ static void eval_feature(State& state, const PV& pv, EvalTable<int>& grad, int d
 		if(pos.endgame_eval() != ValueINF)break;
 		d = pos.turn_player() == White? d : -d;
 		int n_pieces;
-		const Array<int, 32>& list = state.get_piece_list(&n_pieces);
+		const sheena::Array<int, 32>& list = state.get_piece_list(&n_pieces);
 		//piece pair
 		for(int i=0;i<n_pieces;i++){
 			const int p1 =list[i];
@@ -187,7 +187,7 @@ static bool learn_one(Searcher& searcher, State& state, Move bestmove, std::mt19
 	}
 	//search subtree of badmoves
 	//move generation
-	Array<Move, MaxLegalMove> moves;
+	sheena::Array<Move, MaxLegalMove> moves;
 	int n_moves;
 	{
 		const Position& pos = state.pos();
