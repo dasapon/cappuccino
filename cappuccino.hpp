@@ -13,6 +13,7 @@
 #include <initializer_list>
 #include <thread>
 #include <random>
+#include <omp.h>
 
 #include "sheena/sheena.hpp"
 
@@ -138,3 +139,4 @@ struct Record : public std::vector<Move>{
 };
 
 extern std::vector<std::string> split(std::string str);
+extern std::vector<Record> read_pgn(std::string file_name, int elo);

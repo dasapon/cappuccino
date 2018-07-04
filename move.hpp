@@ -64,3 +64,4 @@ public:
 };
 constexpr Move NullMove(0, 0);
 
+extern Move san2move(const Position& pos, std::string str);
